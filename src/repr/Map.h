@@ -14,10 +14,18 @@ enum class Tag {
 
 struct Door {
     size_t id;
+
+    bool operator==(const Door &rhs) const;
+
+    bool operator!=(const Door &rhs) const;
 };
 
 struct Key {
     size_t id;
+
+    bool operator==(const Key &rhs) const;
+
+    bool operator!=(const Key &rhs) const;
 };
 
 struct Empty {
@@ -41,6 +49,10 @@ struct Element {
     static Element Wall();
     static Element Door(size_t id);
     static Element Key(size_t id);
+
+    bool operator==(const Element &rhs) const;
+
+    bool operator!=(const Element &rhs) const;
 };
 
 struct Map {
