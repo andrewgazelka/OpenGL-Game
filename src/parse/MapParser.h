@@ -5,8 +5,7 @@
 #include <repr/Map.h>
 #include <fstream>
 
-class MapParser {
-public:
+namespace MapParser {
     Map parseMap(const std::string &name);
 };
 

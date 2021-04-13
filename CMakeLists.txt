@@ -13,7 +13,12 @@ include_directories(src/parse)
 
 add_subdirectory(lib/glad)
 add_subdirectory(lib/glm)
+add_subdirectory(test)
 
+set(SOURCES src/parse/MapParser.cpp src/parse/MapParser.h src/repr/Map.cpp src/repr/Map.h src/main.cpp)
 
-add_executable(proj4 src/parse/MapParser.cpp src/parse/MapParser.h src/repr/Map.cpp src/repr/Map.h src/main.cpp)
+add_executable(proj4 ${SOURCES})
+add_library(proj4-lib ${SOURCES})
+
 target_link_libraries(proj4 glm glad ${SDL2_LIBRARIES} Boost::filesystem)
+

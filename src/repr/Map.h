@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdlib>
-#include <boost/variant.hpp>
+#include <vector>
 
 enum class Tag {
     START,
