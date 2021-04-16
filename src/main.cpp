@@ -3,6 +3,9 @@
 #include <SDL_opengl.h>
 #include <cstdio>
 
+// Shader macro
+#define GLSL(src) "#version 150 core\n" #src
+
 //For Visual Studios
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
@@ -108,8 +111,7 @@ int main(int argc, char *argv[]) {
     }
 
     ifstream modelFile;
-    modelFile.open("models/triangle.txt");
-//	modelFile.open("models/teapot.txt");
+    modelFile.open("models/teapot.txt");
     int numLines = 0;
     modelFile >> numLines;
     auto *modelData = new float[numLines];
