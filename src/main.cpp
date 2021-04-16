@@ -28,44 +28,43 @@ bool saveOutput = false;
 float timePast = 0;
 
 // Shader sources
-const GLchar *vertexSource =
-        "#version 150 core\n"
-        "in vec3 position;"
-        //"in vec3 inColor;"
-        "const vec3 inColor = vec3(0.f,0.7f,0.f);"
-        "in vec3 inNormal;"
-        "out vec3 Color;"
-        "out vec3 normal;"
-        "out vec3 pos;"
-        "uniform mat4 model;"
-        "uniform mat4 view;"
-        "uniform mat4 proj;"
-        "void main() {"
-        "   Color = inColor;"
-        "   gl_Position = proj * view * model * vec4(position,1.0);"
-        "   pos = (model * vec4(position,1.0)).xyz;"
-        "   vec4 norm4 = transpose(inverse(model)) * vec4(inNormal,0.0);"  //Or Just model matrix, then noramlize the normal
-        "   normal = normalize(norm4.xyz);"
-        "}";
+const GLchar *vertexSource = GLSL(
+        in vec3 position;
+        const vec3 inColor = vec3(0.f,0.7f,0.f);
+        in vec3 inNormal;
+        out vec3 Color;
+        out vec3 normal;
+        out vec3 pos;
+        uniform mat4 model;
+        uniform mat4 view;
+        uniform mat4 proj;
+        void main() {
+           Color = inColor;
+           gl_Position = proj * view * model * vec4(position,1.0);
+           pos = (model * vec4(position,1.0)).xyz;
+           vec4 norm4 = transpose(inverse(model)) * vec4(inNormal,0.0);
+           normal = normalize(norm4.xyz);
+        }
+    );
 
-const GLchar *fragmentSource =
-        "#version 150 core\n"
-        "in vec3 Color;"
-        "in vec3 normal;"
-        "in vec3 pos;"
-        "out vec4 outColor;"
-        "const vec3 lightDir = normalize(vec3(1,1,1));"
-        "const float ambient = .3;"
-        "void main() {"
-        "   vec3 diffuseC = Color*max(dot(lightDir,normal),0.0);"
-        "   vec3 ambC = Color*ambient;"
-        "   vec3 reflectDir = reflect(lightDir,normal);"
-        "   vec3 viewDir = normalize(-pos);" //We know the eye is at (0,0)!
-        "   float spec = max(dot(reflectDir,viewDir),0.0);"
-        "   if (dot(lightDir,normal) <= 0.0)spec = 0;"
-        "   vec3 specC = vec3(1.0,1.0,1.0)*pow(spec,4);"
-        "   outColor = vec4(diffuseC+ambC+specC, 1.0);"
-        "}";
+const GLchar *fragmentSource = GLSL(
+        in vec3 Color;
+        in vec3 normal;
+        in vec3 pos;
+        out vec4 outColor;
+        const vec3 lightDir = normalize(vec3(1,1,1));
+        const float ambient = .3;
+        void main() {
+           vec3 diffuseC = Color*max(dot(lightDir,normal),0.0);
+           vec3 ambC = Color*ambient;
+           vec3 reflectDir = reflect(lightDir,normal);
+           vec3 viewDir = normalize(-pos);
+           float spec = max(dot(reflectDir,viewDir),0.0);
+           if (dot(lightDir,normal) <= 0.0)spec = 0;
+           vec3 specC = vec3(1.0,1.0,1.0)*pow(spec,4);
+           outColor = vec4(diffuseC+ambC+specC, 1.0);
+        }
+   );
 
 bool fullscreen = false;
 int screen_width = 800;
