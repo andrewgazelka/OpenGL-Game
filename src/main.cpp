@@ -77,6 +77,7 @@ float avg_render_time = 0;
 void Win2PPM(int width, int height);
 
 int main(int argc, char *argv[]) {
+
     SDL_Init(SDL_INIT_VIDEO);  //Initialize Graphics (for OpenGL)
 
     //Ask SDL to get a recent version of OpenGL (3.2 or greater)
@@ -86,15 +87,7 @@ int main(int argc, char *argv[]) {
 
     //Create a window (offsetx, offsety, width, height, flags)
     SDL_Window *window = SDL_CreateWindow(window_title, 100, 100, screen_width, screen_height, SDL_WINDOW_OPENGL);
-    float aspect = screen_width / (float) screen_height; //aspect ratio (needs to be updated if the window is resized)
-
-    //The above window cannot be resized which makes some code slightly easier.
-    //Below show how to make a full screen window or allow resizing
-    //SDL_Window* window = SDL_CreateWindow(window_title, 0, 0, screen_width, screen_height, SDL_WINDOW_FULLSCREEN|SDL_WINDOW_OPENGL);
-    //SDL_Window* window = SDL_CreateWindow(window_title, 100, 100, screen_width, screen_height, SDL_WINDOW_RESIZABLE|SDL_WINDOW_OPENGL);
-    //SDL_Window* window = SDL_CreateWindow(window_title,SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,0,0,SDL_WINDOW_FULLSCREEN_DESKTOP|SDL_WINDOW_OPENGL); //Boarderless window "fake" full screen
-
-
+    float aspect = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 
     //Create a context to draw in
     SDL_GLContext context = SDL_GL_CreateContext(window);
@@ -118,11 +111,11 @@ int main(int argc, char *argv[]) {
         modelFile >> modelData[i];
     }
     printf("Mode line count: %d\n", numLines);
-    auto numTris = (float) (numLines / 8);
+    auto numTris = numLines / 8;
 
     //Load the vertex Shader
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexSource, NULL);
+    glShaderSource(vertexShader, 1, &vertexSource, nullptr);
     glCompileShader(vertexShader);
 
     //Let's double check the shader compiled
@@ -130,27 +123,27 @@ int main(int argc, char *argv[]) {
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
     if (!status) {
         char buffer[512];
-        glGetShaderInfoLog(vertexShader, 512, NULL, buffer);
+        glGetShaderInfoLog(vertexShader, 512, nullptr, buffer);
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                  "Compilation Error",
                                  "Failed to Compile: Check Consol Output.",
-                                 NULL);
+                                 nullptr);
         printf("Vertex Shader Compile Failed. Info:\n\n%s\n", buffer);
     }
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+    glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
     glCompileShader(fragmentShader);
 
     //Double check the shader compiled
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &status);
     if (!status) {
         char buffer[512];
-        glGetShaderInfoLog(fragmentShader, 512, NULL, buffer);
+        glGetShaderInfoLog(fragmentShader, 512, nullptr, buffer);
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                  "Compilation Error",
                                  "Failed to Compile: Check Consol Output.",
-                                 NULL);
+                                 nullptr);
         printf("Fragment Shader Compile Failed. Info:\n\n%s\n", buffer);
     }
 
@@ -287,13 +280,13 @@ void Win2PPM(int width, int height) {
 
     /* Allocate our buffer for the image */
     image = (unsigned char *) malloc(3 * width * height * sizeof(char));
-    if (image == NULL) {
+    if (image == nullptr) {
         fprintf(stderr, "ERROR: Failed to allocate memory for image\n");
     }
 
     /* Open the file */
     sprintf(fname, "%simage_%04d.ppm", outdir, counter);
-    if ((fptr = fopen(fname, "w")) == NULL) {
+    if ((fptr = fopen(fname, "w")) == nullptr) {
         fprintf(stderr, "ERROR: Failed to open file to write image\n");
     }
 
