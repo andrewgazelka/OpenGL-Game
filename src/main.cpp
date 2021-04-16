@@ -121,6 +121,7 @@ int main(int argc, char *argv[]) {
                                  "Compilation Error",
                                  "Failed to Compile: Check Consol Output.",
                                  nullptr);
+
         printf("Vertex Shader Compile Failed. Info:\n\n%s\n", buffer);
     }
 
@@ -166,7 +167,7 @@ int main(int argc, char *argv[]) {
     //GL_STREAM_DRAW = geom. changes frequently.  This effects which types of GPU memory is used
 
     //Tell OpenGL how to set fragment shader input
-    GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+    auto posAttrib = static_cast<unsigned int>(glGetAttribLocation(shaderProgram, "position"));
 
     int glStride = 8 * sizeof(float);
 
@@ -180,7 +181,7 @@ int main(int argc, char *argv[]) {
     //glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
     //glEnableVertexAttribArray(colAttrib);
 
-    GLint normAttrib = glGetAttribLocation(shaderProgram, "inNormal");
+    auto normAttrib = static_cast<unsigned int>(glGetAttribLocation(shaderProgram, "inNormal"));
     glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (5 * sizeof(float)));
     glEnableVertexAttribArray(normAttrib);
 
@@ -202,7 +203,7 @@ int main(int argc, char *argv[]) {
     SDL_Event windowEvent;
     bool quit = false;
     while (!quit) {
-        float t_start = SDL_GetTicks();
+        unsigned int t_start = SDL_GetTicks();
 
         while (SDL_PollEvent(&windowEvent)) {
             if (windowEvent.type == SDL_QUIT) quit = true; //Exit event loop
@@ -219,8 +220,9 @@ int main(int argc, char *argv[]) {
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (!saveOutput) timePast = SDL_GetTicks() / 1000.f;
-        if (saveOutput) timePast += .07; //Fix framerate at 14 FPS
+        unsigned int t_now = SDL_GetTicks();
+        if (!saveOutput) timePast = static_cast<float>(t_now) / 1000.f;
+        if (saveOutput) timePast += static_cast<float>(.07); //Fix framerate at 14 FPS
         glm::mat4 model = glm::mat4(1);
         model = glm::rotate(model, timePast * 3.14f / 2, glm::vec3(0.0f, 1.0f, 1.0f));
         model = glm::rotate(model, timePast * 3.14f / 4, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -239,16 +241,16 @@ int main(int argc, char *argv[]) {
         glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, loadModel.numTriangles); //(Primitives, Which VBO, Number of vertices)
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(loadModel.numTriangles)); //(Primitives, Which VBO, Number of vertices)
         if (saveOutput) Win2PPM(screen_width, screen_height);
 
         SDL_GL_SwapWindow(window); //Double buffering
 
-        float t_end = SDL_GetTicks();
+        unsigned int t_end = SDL_GetTicks();
         char update_title[100];
-        float time_per_frame = t_end - t_start;
-        avg_render_time = .98 * avg_render_time + .02 * time_per_frame; //Weighted average for smoothing
-        sprintf(update_title, "%s [Update: %3.0f ms]\n", window_title, avg_render_time);
+        unsigned int time_per_frame = t_end - t_start;
+        avg_render_time = .98f * avg_render_time + .02f * static_cast<float>(time_per_frame); //Weighted average for smoothing
+        sprintf(update_title, "%s [Update: %3.0f ms]\n", window_title, static_cast<double>(avg_render_time));
         SDL_SetWindowTitle(window, update_title);
     }
 
@@ -277,7 +279,7 @@ void Win2PPM(int width, int height) {
     unsigned char *image;
 
     /* Allocate our buffer for the image */
-    image = (unsigned char *) malloc(3 * width * height * sizeof(char));
+    image = (unsigned char *) malloc(static_cast<unsigned long>(3 * width * height) * sizeof(char));
     if (image == nullptr) {
         fprintf(stderr, "ERROR: Failed to allocate memory for image\n");
     }
