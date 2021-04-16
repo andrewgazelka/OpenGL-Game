@@ -22,6 +22,8 @@
 #include <fstream>
 #include <string>
 
+#include "utils.h"
+
 using namespace std;
 
 bool saveOutput = false;
@@ -29,42 +31,42 @@ float timePast = 0;
 
 // Shader sources
 const GLchar *vertexSource = GLSL(
-        in vec3 position;
-        const vec3 inColor = vec3(0.f,0.7f,0.f);
-        in vec3 inNormal;
-        out vec3 Color;
-        out vec3 normal;
-        out vec3 pos;
-        uniform mat4 model;
-        uniform mat4 view;
-        uniform mat4 proj;
-        void main() {
-           Color = inColor;
-           gl_Position = proj * view * model * vec4(position,1.0);
-           pos = (model * vec4(position,1.0)).xyz;
-           vec4 norm4 = transpose(inverse(model)) * vec4(inNormal,0.0);
-           normal = normalize(norm4.xyz);
-        }
-    );
+                                     in vec3 position;
+                                     const vec3 inColor = vec3(0.f, 0.7f, 0.f);
+                                     in vec3 inNormal;
+                                     out vec3 Color;
+                                     out vec3 normal;
+                                     out vec3 pos;
+                                     uniform mat4 model;
+                                     uniform mat4 view;
+                                     uniform mat4 proj;
+                                     void main() {
+                                         Color = inColor;
+                                         gl_Position = proj * view * model * vec4(position, 1.0);
+                                         pos = (model * vec4(position, 1.0)).xyz;
+                                         vec4 norm4 = transpose(inverse(model)) * vec4(inNormal, 0.0);
+                                         normal = normalize(norm4.xyz);
+                                     }
+                             );
 
 const GLchar *fragmentSource = GLSL(
-        in vec3 Color;
-        in vec3 normal;
-        in vec3 pos;
-        out vec4 outColor;
-        const vec3 lightDir = normalize(vec3(1,1,1));
-        const float ambient = .3;
-        void main() {
-           vec3 diffuseC = Color*max(dot(lightDir,normal),0.0);
-           vec3 ambC = Color*ambient;
-           vec3 reflectDir = reflect(lightDir,normal);
-           vec3 viewDir = normalize(-pos);
-           float spec = max(dot(reflectDir,viewDir),0.0);
-           if (dot(lightDir,normal) <= 0.0)spec = 0;
-           vec3 specC = vec3(1.0,1.0,1.0)*pow(spec,4);
-           outColor = vec4(diffuseC+ambC+specC, 1.0);
-        }
-   );
+                                       in vec3 Color;
+                                       in vec3 normal;
+                                       in vec3 pos;
+                                       out vec4 outColor;
+                                       const vec3 lightDir = normalize(vec3(1, 1, 1));
+                                       const float ambient = .3;
+                                       void main() {
+                                           vec3 diffuseC = Color * max(dot(lightDir, normal), 0.0);
+                                           vec3 ambC = Color * ambient;
+                                           vec3 reflectDir = reflect(lightDir, normal);
+                                           vec3 viewDir = normalize(-pos);
+                                           float spec = max(dot(reflectDir, viewDir), 0.0);
+                                           if (dot(lightDir, normal) <= 0.0)spec = 0;
+                                           vec3 specC = vec3(1.0, 1.0, 1.0) * pow(spec, 4);
+                                           outColor = vec4(diffuseC + ambC + specC, 1.0);
+                                       }
+                               );
 
 bool fullscreen = false;
 int screen_width = 800;
@@ -102,16 +104,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    ifstream modelFile;
-    modelFile.open("models/teapot.txt");
-    int numLines = 0;
-    modelFile >> numLines;
-    auto *modelData = new float[numLines];
-    for (int i = 0; i < numLines; i++) {
-        modelFile >> modelData[i];
-    }
-    printf("Mode line count: %d\n", numLines);
-    auto numTris = numLines / 8;
+    Model loadModel = Utils::loadModel("models/teapot.txt");
 
     //Load the vertex Shader
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -165,15 +158,20 @@ int main(int argc, char *argv[]) {
     //Allocate memory on the graphics card to store geometry (vertex buffer object)
     GLuint vbo[1];
     glGenBuffers(1, vbo);  //Create 1 buffer called vbo
-    glBindBuffer(GL_ARRAY_BUFFER,
-                 vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at a time)
-    glBufferData(GL_ARRAY_BUFFER, numLines * sizeof(float), modelData, GL_STATIC_DRAW); //upload vertices to vbo
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at a time)
+
+    long bufferSize = static_cast<long>(loadModel.numLines * sizeof(float));
+    glBufferData(GL_ARRAY_BUFFER, bufferSize, loadModel.data, GL_STATIC_DRAW); //upload vertices to vbo
     //GL_STATIC_DRAW means we won't change the geometry, GL_DYNAMIC_DRAW = geometry changes infrequently
     //GL_STREAM_DRAW = geom. changes frequently.  This effects which types of GPU memory is used
 
     //Tell OpenGL how to set fragment shader input
     GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
+
+    int glStride = 8 * sizeof(float);
+
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, glStride, nullptr);
+
     //Attribute, vals/attrib., type, normalized?, stride, offset
     //Binds to VBO current GL_ARRAY_BUFFER
     glEnableVertexAttribArray(posAttrib);
@@ -241,7 +239,7 @@ int main(int argc, char *argv[]) {
         glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, numTris); //(Primitives, Which VBO, Number of vertices)
+        glDrawArrays(GL_TRIANGLES, 0, loadModel.numTriangles); //(Primitives, Which VBO, Number of vertices)
         if (saveOutput) Win2PPM(screen_width, screen_height);
 
         SDL_GL_SwapWindow(window); //Double buffering
