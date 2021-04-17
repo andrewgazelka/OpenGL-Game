@@ -17,17 +17,15 @@
 #include "gtc/matrix_transform.hpp"
 #include "gtc/type_ptr.hpp"
 
-#include <cstdio>
-#include <iostream>
-#include <fstream>
-#include <string>
-
 #include "utils.h"
+#include "State.h"
 
 using namespace std;
 
 bool saveOutput = false;
 float timePast = 0;
+
+const float FOV_Y = 3.14f / 4;
 
 // Shader sources
 const GLchar *vertexSource = GLSL(
@@ -68,6 +66,39 @@ const GLchar *fragmentSource = GLSL(
                                        }
                                );
 
+void handleKeyPress(State &state, int code) {
+    switch (code) {
+        case SDLK_q:
+        case SDLK_ESCAPE:
+            state.quit = true;
+            break;
+        case SDLK_f:
+            state.fullscreen = !state.fullscreen;
+        default:
+            break;
+    }
+}
+
+void handleKeyHold(State &state, int code) {
+    auto &movement = state.movement;
+    switch (code) {
+        case SDLK_a:
+            movement.look = Look::LEFT;
+            break;
+        case SDLK_d:
+            movement.look = Look::RIGHT;
+            break;
+        case SDLK_w:
+            movement.strafe = Strafe::FORWARD;
+            break;
+        case SDLK_s:
+            movement.strafe = Strafe::BACKWARD;
+            break;
+        default:
+            break;
+    }
+}
+
 bool fullscreen = false;
 int screen_width = 800;
 int screen_height = 600;
@@ -80,12 +111,11 @@ void Win2PPM(int width, int height);
 
 int main(int argc, char *argv[]) {
 
-    SDL_Init(SDL_INIT_VIDEO);  //Initialize Graphics (for OpenGL)
+    State state{
+        .camPosition = glm::vec3(3.f, 0.f, 0.f)
+    };
 
-    //Ask SDL to get a recent version of OpenGL (3.2 or greater)
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    Utils::SDLInit();
 
     //Create a window (offsetx, offsety, width, height, flags)
     SDL_Window *window = SDL_CreateWindow(window_title, 100, 100, screen_width, screen_height, SDL_WINDOW_OPENGL);
@@ -94,52 +124,12 @@ int main(int argc, char *argv[]) {
     //Create a context to draw in
     SDL_GLContext context = SDL_GL_CreateContext(window);
 
-    if (gladLoadGLLoader(SDL_GL_GetProcAddress)) {
-        printf("\nOpenGL loaded\n");
-        printf("Vendor:   %s\n", glGetString(GL_VENDOR));
-        printf("Renderer: %s\n", glGetString(GL_RENDERER));
-        printf("Version:  %s\n\n", glGetString(GL_VERSION));
-    } else {
-        printf("ERROR: Failed to initialize OpenGL context.\n");
-        return -1;
-    }
+    Utils::loadGlad();
 
     Model loadModel = Utils::loadModel("models/teapot.txt");
 
-    //Load the vertex Shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexSource, nullptr);
-    glCompileShader(vertexShader);
-
-    //Let's double check the shader compiled
-    GLint status;
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
-    if (!status) {
-        char buffer[512];
-        glGetShaderInfoLog(vertexShader, 512, nullptr, buffer);
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Compilation Error",
-                                 "Failed to Compile: Check Consol Output.",
-                                 nullptr);
-
-        printf("Vertex Shader Compile Failed. Info:\n\n%s\n", buffer);
-    }
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
-    glCompileShader(fragmentShader);
-
-    //Double check the shader compiled
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &status);
-    if (!status) {
-        char buffer[512];
-        glGetShaderInfoLog(fragmentShader, 512, nullptr, buffer);
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Compilation Error",
-                                 "Failed to Compile: Check Consol Output.",
-                                 nullptr);
-        printf("Fragment Shader Compile Failed. Info:\n\n%s\n", buffer);
-    }
+    auto vertexShader = Utils::loadVertexShader(vertexSource);
+    auto fragmentShader = Utils::loadFragmentShader(fragmentSource);
 
     //Join the vertex and fragment shaders together into one program
     GLuint shaderProgram = glCreateProgram();
@@ -172,9 +162,6 @@ int main(int argc, char *argv[]) {
     int glStride = 8 * sizeof(float);
 
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, glStride, nullptr);
-
-    //Attribute, vals/attrib., type, normalized?, stride, offset
-    //Binds to VBO current GL_ARRAY_BUFFER
     glEnableVertexAttribArray(posAttrib);
 
     //GLint colAttrib = glGetAttribLocation(shaderProgram, "inColor");
@@ -182,7 +169,7 @@ int main(int argc, char *argv[]) {
     //glEnableVertexAttribArray(colAttrib);
 
     auto normAttrib = static_cast<unsigned int>(glGetAttribLocation(shaderProgram, "inNormal"));
-    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (5 * sizeof(float)));
+    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (5 * sizeof(float))); // TODO: what???
     glEnableVertexAttribArray(normAttrib);
 
     glBindVertexArray(0); //Unbind the VAO
@@ -201,20 +188,38 @@ int main(int argc, char *argv[]) {
 
     //Event Loop (Loop forever processing each event as fast as possible)
     SDL_Event windowEvent;
-    bool quit = false;
-    while (!quit) {
+    while (state.isRunning()) {
         unsigned int t_start = SDL_GetTicks();
 
+        // reset movement
+        state.movement = Movement::Default();
+
         while (SDL_PollEvent(&windowEvent)) {
-            if (windowEvent.type == SDL_QUIT) quit = true; //Exit event loop
-            //List of keycodes: https://wiki.libsdl.org/SDL_Keycode - You can catch many special keys
-            //Scancode referes to a keyboard position, keycode referes to the letter (e.g., EU keyboards)
-            if (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE)
-                quit = true; //Exit event loop
-            if (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_f) //If "f" is pressed
-                fullscreen = !fullscreen;
-            SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN : 0); //Set to full screen
+            switch (windowEvent.type) {
+                case SDL_QUIT:
+                    state.quit = true;
+                    break;
+                case SDL_KEYUP:
+                    handleKeyPress(state, windowEvent.key.keysym.sym);
+                    break;
+                case SDL_KEYDOWN:
+                    handleKeyHold(state, windowEvent.key.keysym.sym);
+            }
+
+            SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
         }
+
+        switch (state.movement.strafe) {
+            case Strafe::NONE:
+                break;
+            case Strafe::FORWARD:
+                state.camPosition -= glm::vec3(0.03, 0, 0);
+                break;
+            case Strafe::BACKWARD:
+                state.camPosition += glm::vec3(0.03, 0, 0);
+                break;
+        }
+
 
         // Clear the screen to default color
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
@@ -223,24 +228,27 @@ int main(int argc, char *argv[]) {
         unsigned int t_now = SDL_GetTicks();
         if (!saveOutput) timePast = static_cast<float>(t_now) / 1000.f;
         if (saveOutput) timePast += static_cast<float>(.07); //Fix framerate at 14 FPS
+
         glm::mat4 model = glm::mat4(1);
         model = glm::rotate(model, timePast * 3.14f / 2, glm::vec3(0.0f, 1.0f, 1.0f));
         model = glm::rotate(model, timePast * 3.14f / 4, glm::vec3(1.0f, 0.0f, 0.0f));
         GLint uniModel = glGetUniformLocation(shaderProgram, "model");
         glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
-        glm::mat4 view = glm::lookAt(
-                glm::vec3(3.f, 0.f, 0.f),  //Cam Position
-                glm::vec3(0.0f, 0.0f, 0.0f),  //Look at point
-                glm::vec3(0.0f, 0.0f, 1.0f)); //Up
+
+        glm::vec3 center(0.0f, 0.05, 0.0f);
+        glm::vec3 up(0.0f, 0.0f, 1.0f);
+
+        // set view matrix
+        glm::mat4 view = glm::lookAt(state.camPosition, center, up);
         GLint uniView = glGetUniformLocation(shaderProgram, "view");
         glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
-        glm::mat4 proj = glm::perspective(3.14f / 4, aspect, 1.0f, 10.0f); //FOV, aspect, near, far
+        glm::mat4 proj = glm::perspective(FOV_Y, aspect, 1.0f, 10.0f);
         GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
         glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
-        glBindVertexArray(vao);
+        glBindVertexArray(vao); // TODO: huh
         glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(loadModel.numTriangles)); //(Primitives, Which VBO, Number of vertices)
         if (saveOutput) Win2PPM(screen_width, screen_height);
 
