@@ -220,6 +220,17 @@ int main(int argc, char *argv[]) {
                 break;
         }
 
+        switch (state.movement.look) {
+            case Look::NONE:
+                break;
+            case Look::LEFT:
+                state.angle -= 0.01;
+                break;
+            case Look::RIGHT:
+                state.angle += 0.01;
+                break;
+        }
+
 
         // Clear the screen to default color
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
@@ -230,17 +241,17 @@ int main(int argc, char *argv[]) {
         if (saveOutput) timePast += static_cast<float>(.07); //Fix framerate at 14 FPS
 
         glm::mat4 model = glm::mat4(1);
-        model = glm::rotate(model, timePast * 3.14f / 2, glm::vec3(0.0f, 1.0f, 1.0f));
-        model = glm::rotate(model, timePast * 3.14f / 4, glm::vec3(1.0f, 0.0f, 0.0f));
         GLint uniModel = glGetUniformLocation(shaderProgram, "model");
         glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
 
-        glm::vec3 center(0.0f, 0.05, 0.0f);
+        glm::vec3 dir(-1.0f * cos(state.angle), sin(state.angle), 0.0f);
+        glm::vec3 center = state.camPosition + dir;
         glm::vec3 up(0.0f, 0.0f, 1.0f);
 
         // set view matrix
         glm::mat4 view = glm::lookAt(state.camPosition, center, up);
+
         GLint uniView = glGetUniformLocation(shaderProgram, "view");
         glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
