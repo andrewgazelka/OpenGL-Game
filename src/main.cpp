@@ -26,6 +26,8 @@ bool saveOutput = false;
 float timePast = 0;
 
 const float FOV_Y = 3.14f / 4;
+const float STRAFE_SPEED = 0.07;
+const float LOOK_SPEED = 0.03;
 
 // Shader sources
 const GLchar *vertexSource = GLSL(
@@ -214,14 +216,14 @@ int main(int argc, char *argv[]) {
             case Look::NONE:
                 break;
             case Look::LEFT:
-                state.angle -= 0.01;
+                state.angle -= LOOK_SPEED;
                 break;
             case Look::RIGHT:
-                state.angle += 0.01;
+                state.angle += LOOK_SPEED;
                 break;
         }
 
-        glm::vec3 dir(-0.05f * cos(state.angle), 0.05f * sin(state.angle), 0.0f);
+        glm::vec3 dir(-STRAFE_SPEED * cos(state.angle), STRAFE_SPEED * sin(state.angle), 0.0f);
 
         switch (state.movement.strafe) {
             case Strafe::NONE:
