@@ -209,16 +209,6 @@ int main(int argc, char *argv[]) {
             SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
         }
 
-        switch (state.movement.strafe) {
-            case Strafe::NONE:
-                break;
-            case Strafe::FORWARD:
-                state.camPosition -= glm::vec3(0.03, 0, 0);
-                break;
-            case Strafe::BACKWARD:
-                state.camPosition += glm::vec3(0.03, 0, 0);
-                break;
-        }
 
         switch (state.movement.look) {
             case Look::NONE:
@@ -231,6 +221,18 @@ int main(int argc, char *argv[]) {
                 break;
         }
 
+        glm::vec3 dir(-0.05f * cos(state.angle), 0.05f * sin(state.angle), 0.0f);
+
+        switch (state.movement.strafe) {
+            case Strafe::NONE:
+                break;
+            case Strafe::FORWARD:
+                state.camPosition += dir;
+                break;
+            case Strafe::BACKWARD:
+                state.camPosition -= dir;
+                break;
+        }
 
         // Clear the screen to default color
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
@@ -245,7 +247,6 @@ int main(int argc, char *argv[]) {
         glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
 
-        glm::vec3 dir(-1.0f * cos(state.angle), sin(state.angle), 0.0f);
         glm::vec3 center = state.camPosition + dir;
         glm::vec3 up(0.0f, 0.0f, 1.0f);
 
