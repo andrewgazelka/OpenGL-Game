@@ -29,45 +29,6 @@ const float FOV_Y = 3.14f / 4;
 const float STRAFE_SPEED = 0.07;
 const float LOOK_SPEED = 0.03;
 
-// Shader sources
-const GLchar *vertexSource = GLSL(
-                                     in vec3 position;
-                                     const vec3 inColor = vec3(0.f, 0.7f, 0.f);
-                                     in vec3 inNormal;
-                                     out vec3 Color;
-                                     out vec3 normal;
-                                     out vec3 pos;
-                                     uniform mat4 model;
-                                     uniform mat4 view;
-                                     uniform mat4 proj;
-                                     void main() {
-                                         Color = inColor;
-                                         gl_Position = proj * view * model * vec4(position, 1.0);
-                                         pos = (model * vec4(position, 1.0)).xyz;
-                                         vec4 norm4 = transpose(inverse(model)) * vec4(inNormal, 0.0);
-                                         normal = normalize(norm4.xyz);
-                                     }
-                             );
-
-const GLchar *fragmentSource = GLSL(
-                                       in vec3 Color;
-                                       in vec3 normal;
-                                       in vec3 pos;
-                                       out vec4 outColor;
-                                       const vec3 lightDir = normalize(vec3(1, 1, 1));
-                                       const float ambient = .3;
-                                       void main() {
-                                           vec3 diffuseC = Color * max(dot(lightDir, normal), 0.0);
-                                           vec3 ambC = Color * ambient;
-                                           vec3 reflectDir = reflect(lightDir, normal);
-                                           vec3 viewDir = normalize(-pos);
-                                           float spec = max(dot(reflectDir, viewDir), 0.0);
-                                           if (dot(lightDir, normal) <= 0.0)spec = 0;
-                                           vec3 specC = vec3(1.0, 1.0, 1.0) * pow(spec, 4);
-                                           outColor = vec4(diffuseC + ambC + specC, 1.0);
-                                       }
-                               );
-
 void handleKeyPress(State &state, int code) {
     switch (code) {
         case SDLK_q:
@@ -109,12 +70,10 @@ char window_title[] = "My OpenGL Program";
 
 float avg_render_time = 0;
 
-void Win2PPM(int width, int height);
-
 int main(int argc, char *argv[]) {
 
     State state{
-        .camPosition = glm::vec3(3.f, 0.f, 0.f)
+            .camPosition = glm::vec3(3.f, 0.f, 0.f)
     };
 
     Utils::SDLInit();
@@ -128,22 +87,16 @@ int main(int argc, char *argv[]) {
 
     Utils::loadGlad();
 
-    Model loadModel = Utils::loadModel("models/teapot.txt");
+    auto woodTexture = Utils::loadBMP("textures/wood.bmp");
+    auto brickTexture = Utils::loadBMP("textures/brick.bmp");
 
-    auto vertexShader = Utils::loadVertexShader(vertexSource);
-    auto fragmentShader = Utils::loadFragmentShader(fragmentSource);
+    Model teapotModel = Utils::loadModel("models/teapot.txt");
+    Model cubeModel = Utils::loadModel("models/cube.txt");
 
-    //Join the vertex and fragment shaders together into one program
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glBindFragDataLocation(shaderProgram, 0, "outColor"); // set output
-    glLinkProgram(shaderProgram); //run the linker
+    // combine into one array and change pointers of other models
+    Model combined = Model::combine({&teapotModel, &cubeModel});
 
-    glUseProgram(shaderProgram); //Set the active shader (only one can be used at a time)
-
-
-    //Build a Vertex Array Object. This stores the VBO and attribute mappings in one object
+    //Build a Vertex Array Object (VAO) to store mapping of shader attributse to VBO
     GLuint vao;
     glGenVertexArrays(1, &vao); //Create a VAO
     glBindVertexArray(vao); //Bind the above created VAO to the current context
@@ -152,39 +105,30 @@ int main(int argc, char *argv[]) {
     GLuint vbo[1];
     glGenBuffers(1, vbo);  //Create 1 buffer called vbo
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at a time)
+    glBufferData(GL_ARRAY_BUFFER, combined.numLines * sizeof(float), combined.data.get(), GL_STATIC_DRAW); //upload vertices to vbo
 
-    long bufferSize = static_cast<long>(loadModel.numLines * sizeof(float));
-    glBufferData(GL_ARRAY_BUFFER, bufferSize, loadModel.data, GL_STATIC_DRAW); //upload vertices to vbo
-    //GL_STATIC_DRAW means we won't change the geometry, GL_DYNAMIC_DRAW = geometry changes infrequently
-    //GL_STREAM_DRAW = geom. changes frequently.  This effects which types of GPU memory is used
+    auto texturedShader = Utils::InitShader("shaders/textured-Vertex.glsl", "shaders/textured-Fragment.glsl");
 
-    //Tell OpenGL how to set fragment shader input
-    auto posAttrib = static_cast<unsigned int>(glGetAttribLocation(shaderProgram, "position"));
-
-    int glStride = 8 * sizeof(float);
-
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, glStride, nullptr);
+    GLint posAttrib = glGetAttribLocation(texturedShader, "position");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
     glEnableVertexAttribArray(posAttrib);
 
-    //GLint colAttrib = glGetAttribLocation(shaderProgram, "inColor");
+    //GLint colAttrib = glGetAttribLocation(phongShader, "inColor");
     //glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
     //glEnableVertexAttribArray(colAttrib);
 
-    auto normAttrib = static_cast<unsigned int>(glGetAttribLocation(shaderProgram, "inNormal"));
-    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (5 * sizeof(float))); // TODO: what???
+    GLint normAttrib = glGetAttribLocation(texturedShader, "inNormal");
+    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (5 * sizeof(float)));
     glEnableVertexAttribArray(normAttrib);
 
-    glBindVertexArray(0); //Unbind the VAO
+    GLint texAttrib = glGetAttribLocation(texturedShader, "inTexcoord");
+    glEnableVertexAttribArray(texAttrib);
+    glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
 
-    //You need a second VAO, e.g., if some of the models are stored in a second format
-    //Here is what that looks like--
-    //GLuint vao2;
-    //glGenVertexArrays(1, &vao2); //Create the VAO
-    //glBindVertexArray(vao2); //Bind the above created VAO to the current context
-    //  Creat VBOs ...
-    //  Set-up attributes ...
-    //glBindVertexArray(0); //Unbind the VAO
+    GLint uniView = glGetUniformLocation(texturedShader, "view");
+    GLint uniProj = glGetUniformLocation(texturedShader, "proj");
 
+    glBindVertexArray(0); //Unbind the VAO in case we want to create a new one
 
     glEnable(GL_DEPTH_TEST);
 
@@ -240,14 +184,25 @@ int main(int argc, char *argv[]) {
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glUseProgram(texturedShader); //Set the active shader (only one can be used at a time)
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, woodTexture);
+        glUniform1i(glGetUniformLocation(texturedShader, "tex0"), 0);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, brickTexture);
+        glUniform1i(glGetUniformLocation(texturedShader, "tex1"), 1);
+
+
+
         unsigned int t_now = SDL_GetTicks();
-        if (!saveOutput) timePast = static_cast<float>(t_now) / 1000.f;
-        if (saveOutput) timePast += static_cast<float>(.07); //Fix framerate at 14 FPS
+
+        timePast = static_cast<float>(t_now) / 1000.f;
 
         glm::mat4 model = glm::mat4(1);
-        GLint uniModel = glGetUniformLocation(shaderProgram, "model");
-        glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
-
+        GLint modelLoc = glGetUniformLocation(texturedShader, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         glm::vec3 center = state.camPosition + dir;
         glm::vec3 up(0.0f, 0.0f, 1.0f);
@@ -255,16 +210,16 @@ int main(int argc, char *argv[]) {
         // set view matrix
         glm::mat4 view = glm::lookAt(state.camPosition, center, up);
 
-        GLint uniView = glGetUniformLocation(shaderProgram, "view");
+        GLint uniView = glGetUniformLocation(texturedShader, "view");
         glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
         glm::mat4 proj = glm::perspective(FOV_Y, aspect, 1.0f, 10.0f);
-        GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
+        GLint uniProj = glGetUniformLocation(texturedShader, "proj");
         glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
         glBindVertexArray(vao); // TODO: huh
-        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(loadModel.numTriangles)); //(Primitives, Which VBO, Number of vertices)
-        if (saveOutput) Win2PPM(screen_width, screen_height);
+
+        Utils::drawGeometry(texturedShader, teapotModel.start, teapotModel.numVertices, cubeModel.start, cubeModel.numVertices, 1.0, 1.0, 1.0);
 
         SDL_GL_SwapWindow(window); //Double buffering
 
@@ -278,10 +233,7 @@ int main(int argc, char *argv[]) {
 
 
     //Clean Up
-    glDeleteProgram(shaderProgram);
-    glDeleteShader(fragmentShader);
-    glDeleteShader(vertexShader);
-
+    glDeleteProgram(texturedShader);
     glDeleteBuffers(1, vbo);
     glDeleteVertexArrays(1, &vao);
 
@@ -290,43 +242,3 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-
-//Write out PPM image from screen
-void Win2PPM(int width, int height) {
-    char outdir[10] = "out/"; //Must be defined!
-    int i, j;
-    FILE *fptr;
-    static int counter = 0;
-    char fname[32];
-    unsigned char *image;
-
-    /* Allocate our buffer for the image */
-    image = (unsigned char *) malloc(static_cast<unsigned long>(3 * width * height) * sizeof(char));
-    if (image == nullptr) {
-        fprintf(stderr, "ERROR: Failed to allocate memory for image\n");
-    }
-
-    /* Open the file */
-    sprintf(fname, "%simage_%04d.ppm", outdir, counter);
-    if ((fptr = fopen(fname, "w")) == nullptr) {
-        fprintf(stderr, "ERROR: Failed to open file to write image\n");
-    }
-
-    /* Copy the image into our buffer */
-    glReadBuffer(GL_BACK);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
-
-    /* Write the PPM file */
-    fprintf(fptr, "P6\n%d %d\n255\n", width, height);
-    for (j = height - 1; j >= 0; j--) {
-        for (i = 0; i < width; i++) {
-            fputc(image[3 * j * width + 3 * i + 0], fptr);
-            fputc(image[3 * j * width + 3 * i + 1], fptr);
-            fputc(image[3 * j * width + 3 * i + 2], fptr);
-        }
-    }
-
-    free(image);
-    fclose(fptr);
-    counter++;
-}
