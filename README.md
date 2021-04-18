@@ -73,7 +73,7 @@ WWWW
 ```
 
 <p align="center">
-  <img width="460" src=".github/wall-keys.png">
+  <img width="800px" src=".github/wall-keys.png">
 </p>
 
 There is no end to this map, but it shows off all the walls and keys!
