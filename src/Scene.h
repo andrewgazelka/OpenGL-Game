@@ -141,7 +141,7 @@ public:
                         // no special drawing
                         break;
                     case Tag::DOOR:
-                        Draw(fx, fy, 0.0f, textures.doorModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
+                        Draw(fx, fy, 0.0f, textures.doorModel, (float) element.value.door.id / 5.0f, 0.0f, 0.0f);
                         break;
                     case Tag::WALL:
                         Draw(fx, fy, 0.0f, textures.wallModel);
@@ -153,7 +153,7 @@ public:
 
         for (const auto &key: keys) {
             auto id = key.id;
-            Draw(key.location[0], key.location[1], key.location[2], textures.keyModel, (float) id / 10.0f, 0.0f, 0.0f, 0.2, -key.angle);
+            Draw(key.location[0], key.location[1], key.location[2], textures.keyModel, (float) id / 5.0f, 0.0f, 0.0f, 0.2, -key.angle);
         }
     }
 
