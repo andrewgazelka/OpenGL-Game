@@ -101,7 +101,7 @@ composed the wrappers I created around primitives to create a game which
 looks and feels very nice compared to what my expectations 
 were.
 
-### Issues
+## Issues
 
 I don't believe I have any issues in the code now,
 but I experienced a lot of dumb mistakes. One such issue was
