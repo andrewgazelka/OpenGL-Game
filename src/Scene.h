@@ -15,7 +15,6 @@ struct TextureData {
     TexturedModel &wallModel;
     Model &keyModel;
     TexturedModel &floorModel;
-//    Model &keyModel;
     Model &doorModel;
 };
 

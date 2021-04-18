@@ -18,6 +18,7 @@ enum class Strafe {
 struct Movement {
     Look look = Look::NONE;
     Strafe strafe = Strafe::NONE;
+    float velocityY = 0.0;
     static Movement Default(){
         Movement movement;
         return movement;
@@ -36,6 +37,10 @@ struct State {
 
     [[nodiscard]] inline bool isRunning() const{
         return !quit;
+    }
+
+    inline bool onGround(){
+        return camPosition[2] == 0.0f;
     }
 };
 

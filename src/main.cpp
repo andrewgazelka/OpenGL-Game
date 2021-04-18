@@ -25,7 +25,6 @@
 
 using namespace std;
 
-float timePast = 0;
 
 const float FOV_Y = 3.14f / 4;
 const float STRAFE_SPEED = 0.07;
@@ -35,6 +34,9 @@ const float ZFAR = 10.0;
 const float EXTRA_FACTOR = 3.0f;
 const float KEY_DIST = 0.5f;
 const float KEY_HEIGHT = -0.1f;
+
+const float JUMP_VEL = 0.07;
+const float ACC_G = 0.2f;
 
 void handleKeyPress(State &state, int code) {
     switch (code) {
@@ -63,6 +65,12 @@ void handleKeyHold(State &state, int code) {
             break;
         case SDLK_s:
             movement.strafe = Strafe::BACKWARD;
+            break;
+        case SDLK_SPACE:
+            // if on ground
+            if (state.camPosition[2] == 0.0) {
+                state.movement.velocityY = JUMP_VEL;
+            }
             break;
         default:
             break;
@@ -172,11 +180,29 @@ int main(int argc, char *argv[]) {
 
     //Event Loop (Loop forever processing each event as fast as possible)
     SDL_Event windowEvent;
+    unsigned int t_prev = 0;
     while (state.isRunning()) {
         unsigned int t_start = SDL_GetTicks();
 
+        if (t_prev == 0) {
+            t_prev = t_start;
+        }
+
+        unsigned int millisPast = t_start - t_prev;
+        float secondsPast = millisPast / 1000.F;
+
+        if (!state.onGround() || state.movement.velocityY != 0.0f) {
+            state.camPosition[2] += state.movement.velocityY;
+            if(state.camPosition[2] < 0.0f){ // so we always hit ground
+                state.camPosition[2] = 0.0f;
+            }
+
+            state.movement.velocityY -= ACC_G * secondsPast;
+        }
+
         // reset movement
-        state.movement = Movement::Default();
+        state.movement.strafe = Strafe::NONE;
+        state.movement.look = Look::NONE;
 
         while (SDL_PollEvent(&windowEvent)) {
             switch (windowEvent.type) {
@@ -226,7 +252,7 @@ int main(int argc, char *argv[]) {
                 break;
         }
 
-        if(state.movement.strafe != Strafe::NONE){
+        if (state.movement.strafe != Strafe::NONE) {
 
             float x = extraPosition[0];
             float y = extraPosition[1];
@@ -254,8 +280,6 @@ int main(int argc, char *argv[]) {
         glUniform1i(glGetUniformLocation(texturedShader, "tex1"), BRICK_TEXTURE_ID);
 
         unsigned int t_now = SDL_GetTicks();
-
-        timePast = static_cast<float>(t_now) / 1000.f;
 
         glm::mat4 model = glm::mat4(1);
         GLint modelLoc = glGetUniformLocation(texturedShader, "model");
@@ -287,6 +311,8 @@ int main(int argc, char *argv[]) {
         avg_render_time = .98f * avg_render_time + .02f * static_cast<float>(time_per_frame); //Weighted average for smoothing
         sprintf(update_title, "%s [Update: %3.0f ms]\n", window_title, static_cast<double>(avg_render_time));
         SDL_SetWindowTitle(window, update_title);
+
+        t_prev = t_start;
     }
 
 
