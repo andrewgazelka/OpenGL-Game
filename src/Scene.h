@@ -113,8 +113,9 @@ public:
             case Tag::EMPTY:
                 return false;
             case Tag::WALL:
-            case Tag::DOOR: // TODO: door optional
                 return true;
+            case Tag::DOOR:
+                return HandleDoor(element.value.door, iX, iY);
         }
 
     }
@@ -153,6 +154,43 @@ public:
     }
 
 private:
+
+    /**
+     *
+     * @param door
+     * @param iX
+     * @param iY
+     * @return  True if collide else false
+     */
+    bool HandleDoor(const Door& door, int iX, int iY){
+        for (const auto &grabbedKey : grabbedKeys){
+            if(door.id == grabbedKey->id){
+
+                // the grabbed grabbedKey disappears
+                grabbedKeys.erase(grabbedKey);
+
+                for (int i = 0; i < keys.size(); ++i) {
+                    auto& key = keys[i];
+                    if(key.originX == grabbedKey->originX && key.originY == grabbedKey->originY){
+                        keys.erase(keys.begin() + i);
+                        goto end;
+                    }
+                }
+
+                end:
+
+                for (const auto &key: keys){
+                }
+
+
+                // the door disappears
+                *map.GetElementRef(iX, iY) = Element::Empty();
+
+                return false;
+            }
+        }
+        return true;
+    }
 
     void HandleKey(int iX, int iY) {
 
