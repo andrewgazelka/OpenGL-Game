@@ -148,7 +148,7 @@ public:
 
         for (const auto &key: keys) {
             auto id = key.id;
-            Draw(key.location[0], key.location[1], key.location[2], textures.keyModel, (float) id / 10.0f, 0.0f, 0.0f, 0.2, 0.0f);
+            Draw(key.location[0], key.location[1], key.location[2], textures.keyModel, (float) id / 10.0f, 0.0f, 0.0f, 0.2, -key.angle);
         }
     }
 
@@ -170,9 +170,9 @@ private:
 
     void Draw(float x, float y, float z, const Model &model, float r, float g, float b, float scale = 1.0, float rotation = 0.0) {
         SetColor(r, g, b);
-        SetRotation(rotation);
         SetTranslation(x, y, z);
         SetScale(scale);
+        SetRotation(rotation);
         SendTransformations();
         model.draw();
         ResetModel();
@@ -180,9 +180,9 @@ private:
 
     void Draw(float x, float y, float z, const TexturedModel &texturedModel, float scale = 1.0, float rotation =0.0) {
         SetTexture(texturedModel.textureId);
-        SetRotation(rotation);
         SetTranslation(x, y, z);
         SetScale(scale);
+        SetRotation(rotation);
         SendTransformations();
         texturedModel.model.draw();
         ResetModel();
