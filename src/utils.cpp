@@ -146,61 +146,6 @@ namespace Utils {
         return buffer;
     }
 
-    void drawGeometry(unsigned int shaderProgram, const Model& model1, const Model& model2, float colR, float colG, float colB) {
-        GLint uniColor = glGetUniformLocation(shaderProgram, "inColor");
-        glm::vec3 colVec(colR, colG, colB);
-        glUniform3fv(uniColor, 1, glm::value_ptr(colVec));
-
-        GLint uniTexID = glGetUniformLocation(shaderProgram, "texID");
-
-        //************
-        //Draw model #1 the first time
-        //This model is stored in the VBO starting a offest model1_start and with model1_numVerts num of verticies
-        //*************
-
-        //Rotate model (matrix) based on how much time has past
-        glm::mat4 model = glm::mat4(1);
-        GLint modelParam = glGetUniformLocation(shaderProgram, "model");
-//        glUniformMatrix4fv(modelParam, 1, GL_FALSE, glm::value_ptr(model)); //pass model matrix to shader
-//
-//        // draw model 2 without texture
-//        glUniform1i(textureIdParam, -1);
-//        model2.draw();
-
-
-        //************
-        //Draw model #1 the second time
-        //This model is stored in the VBO starting a offest model1_start and with model1_numVerts num. of verticies
-        //*************
-
-        //Translate the model (matrix) left and back
-        model = glm::mat4(1); //Load intentity
-        model = glm::translate(model, glm::vec3(-2, -1, -.4));
-        glUniformMatrix4fv(modelParam, 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(uniTexID, 0);
-
-        //Draw an instance of the model (at the position & orientation specified by the model matrix above)
-        model1.draw();
-
-        //************
-        //Draw model #2 once
-        //This model is stored in the VBO starting a offest model2_start and with model2_numVerts num of verticies
-        //*************
-
-        //Translate the model (matrix) based on where objx/y/z is
-        // ... these variables are set when the user presses the arrow keys
-        model = glm::mat4(1);
-        model = glm::scale(model, glm::vec3(.8f, .8f, .8f)); //scale this model
-//        model = glm::translate(model, glm::vec3(objx, objy, objz));
-
-        //Set which texture to use (1 = brick texture ... bound to GL_TEXTURE1)
-        glUniform1i(uniTexID, 1);
-        glUniformMatrix4fv(modelParam, 1, GL_FALSE, glm::value_ptr(model));
-
-        //Draw an instance of the model (at the position & orientation specified by the model matrix above)
-        model2.draw();
-    }
-
     unsigned int loadBMP(const std::string &filePath) {
         //// Allocate Texture 0 (Wood) ///////
         SDL_Surface *surface = SDL_LoadBMP(filePath.c_str());

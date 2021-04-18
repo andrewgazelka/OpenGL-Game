@@ -25,7 +25,6 @@
 
 using namespace std;
 
-bool saveOutput = false;
 float timePast = 0;
 
 const float FOV_Y = 3.14f / 4;
@@ -33,6 +32,7 @@ const float STRAFE_SPEED = 0.07;
 const float LOOK_SPEED = 0.03;
 const float ZNEAR = 0.01;
 const float ZFAR = 10.0;
+const float EXTRA_FACTOR = 3.0f;
 
 void handleKeyPress(State &state, int code) {
     switch (code) {
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
     Model combined = Model::combine({&cubeModel, &model2});
 
     std::cout << "cubeModel: " << cubeModel << std::endl;
-    std::cout << "model2: "<< model2 << std::endl;
-    std::cout << "combined: "<< combined << std::endl;
+    std::cout << "model2: " << model2 << std::endl;
+    std::cout << "combined: " << combined << std::endl;
 
     //Build cubeTexturedModel Vertex Array Object (VAO) to store mapping of shader attributse to VBO
     GLuint vao;
@@ -191,17 +191,35 @@ int main(int argc, char *argv[]) {
         }
 
         glm::vec3 dir(-STRAFE_SPEED * cos(state.angle), STRAFE_SPEED * sin(state.angle), 0.0f);
+        glm::vec3 dirExtra(-STRAFE_SPEED * EXTRA_FACTOR * cos(state.angle), STRAFE_SPEED * EXTRA_FACTOR * sin(state.angle), 0.0f);
+
+        auto oldPosition = state.camPosition;
+
+        glm::vec3 extraPosition = state.camPosition;
 
         switch (state.movement.strafe) {
             case Strafe::NONE:
                 break;
             case Strafe::FORWARD:
                 state.camPosition += dir;
+                extraPosition += dirExtra;
                 break;
             case Strafe::BACKWARD:
                 state.camPosition -= dir;
+                extraPosition -= dirExtra;
                 break;
         }
+
+        if(state.movement.strafe != Strafe::NONE){
+
+            float x = extraPosition[0];
+            float y = extraPosition[1];
+
+            if (scene.IsCollision(x, y)) {
+                state.camPosition = oldPosition;
+            }
+        }
+
 
         // Clear the screen to default color
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
@@ -242,7 +260,6 @@ int main(int argc, char *argv[]) {
         glBindVertexArray(vao);
 
         scene.Draw();
-//        Utils::drawGeometry(texturedShader, cubeModel, model2, 1.0, 0.0, 0.0f);
 
         SDL_GL_SwapWindow(window); //Double buffering
 

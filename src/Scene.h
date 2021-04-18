@@ -33,6 +33,34 @@ public:
         colorParam = glGetUniformLocation(shaderProgram, "inColor");
     }
 
+    bool IsCollision(float x, float y) {
+
+        if (x < -0.5 || y < -0.5) return false;
+
+        int maxX = map.width - 1;
+        int maxY = map.height - 1;
+
+        if (x > maxX + 0.5 || y > maxY + 0.5)return false;
+
+        int iX = (int) std::round(x);
+        int iY = (int) std::round(y);
+
+        Element element = map.GetElement(iX, iY);
+
+        switch (element.tag) {
+            case Tag::START:
+            case Tag::FINISH:
+            case Tag::KEY:
+            case Tag::EMPTY:
+                return false;
+            case Tag::WALL:
+            case Tag::DOOR: // TODO: door optional
+                return true;
+        }
+
+    }
+
+
     void Draw() const {
         for (int x = 0; x < map.width; ++x) {
             for (int y = 0; y < map.height; ++y) {
@@ -48,7 +76,7 @@ public:
                     case Tag::KEY:
                         break;
                     case Tag::WALL:
-                        Draw(x, y , textures.wallModel);
+                        Draw(x, y, textures.wallModel);
                         break;
                 }
             }
