@@ -212,7 +212,6 @@ private:
         }
         assert(key != nullptr);
         grabbedKeys.insert(key);
-        std::cout << "handled key iX iY " << iX << ", " << iY << std::endl;
         *map.GetElementRef(iX, iY) = Element::Empty();
     }
 
