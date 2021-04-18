@@ -128,14 +128,11 @@ int main(int argc, char *argv[]) {
 
     Model cubeModel = Utils::loadModel("models/cube.txt");
     Model knotModel = Utils::loadModel("models/knot.txt");
+    Model teapotModel = Utils::loadModel("models/teapot.txt");
 
 
     // combine into one array and change pointers of other models
-    Model combined = Model::combine({&cubeModel, &knotModel});
-
-    std::cout << "cubeModel: " << cubeModel << std::endl;
-    std::cout << "knotModel: " << knotModel << std::endl;
-    std::cout << "combined: " << combined << std::endl;
+    Model combined = Model::combine({&cubeModel, &knotModel, &teapotModel});
 
     //Build brickCube Vertex Array Object (VAO) to store mapping of shader attributse to VBO
     GLuint vao;
@@ -187,6 +184,7 @@ int main(int argc, char *argv[]) {
             .wallModel = brickCube,
             .keyModel = knotModel,
             .floorModel = woodCube,
+            .endModel= teapotModel,
             .doorModel = cubeModel,
     };
 

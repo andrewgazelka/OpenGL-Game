@@ -15,6 +15,7 @@ struct TextureData {
     TexturedModel &wallModel;
     Model &keyModel;
     TexturedModel &floorModel;
+    Model &endModel;
     Model &doorModel;
 };
 
@@ -132,6 +133,8 @@ public:
 
                 switch (element.tag) {
                     case Tag::FINISH:
+                        Draw(fx, fy, -.25, textures.endModel, 0.1, 0.9f, 0.0f, 0.2);
+                        break;
                     case Tag::START:
                     case Tag::EMPTY:
                     case Tag::KEY: // keys are dynamic—we draw them elsewhere
