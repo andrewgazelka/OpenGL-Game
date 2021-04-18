@@ -26,3 +26,25 @@ WWWWWWW
 
 ![Example](.github/example.webp)
 
+
+## Checklist
+
+### Basic
+
+- [x] Continuous Movement
+- [x] Walls & Doors (each of five doors and keys look consecutively more red)
+- [x] Keys (and rendering in front)
+- [x] User Input
+- [x] Collision Detection
+- [x] Floors
+- [x] Lighting
+- [x] New Map
+
+### Additional
+
+- [x] Texture map
+- [x] Keyboard and mouse control
+- [x] Jumping
+- [x] Video (webp video at start)
+
+## New Maps
