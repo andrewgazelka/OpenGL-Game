@@ -3,6 +3,7 @@
 #include <repr/Map.h>
 
 #include <utility>
+#include <unordered_set>
 #include "utils.h"
 
 struct TexturedModel {
@@ -20,6 +21,9 @@ struct TextureData {
 
 
 struct SceneKey {
+    int originX;
+    int originY;
+    float angle = 0.0;
     size_t id;
     glm::vec3 location;
 };
@@ -27,16 +31,17 @@ struct SceneKey {
 class Scene {
 private:
     TextureData textures;
-    const Map& map;
+    Map &map;
     unsigned int shaderProgram;
     GLint modelParam;
     GLint textureIdParam;
     GLint colorParam;
     glm::mat4 model;
     std::vector<SceneKey> keys;
+    std::unordered_set<SceneKey *> grabbedKeys;
 
 public:
-    Scene(const TextureData &data, const Map &map, unsigned int shaderProgram) : textures(data), map(map), shaderProgram(shaderProgram) {
+    Scene(const TextureData &data, Map &map, unsigned int shaderProgram) : textures(data), map(map), shaderProgram(shaderProgram) {
         modelParam = glGetUniformLocation(shaderProgram, "model");
         textureIdParam = glGetUniformLocation(shaderProgram, "texID");
         colorParam = glGetUniformLocation(shaderProgram, "inColor");
@@ -48,6 +53,8 @@ public:
                 if (element.tag == Tag::KEY) {
                     glm::vec3 location(x, y, -.25);
                     SceneKey key = {
+                            .originX = x,
+                            .originY = y,
                             .id = element.value.key.id,
                             .location = location
                     };
@@ -75,6 +82,14 @@ public:
         throw std::logic_error("no start position");
     }
 
+
+    void UpdateGrabbedKeys(glm::vec3 position, float angle) {
+        for (const auto &item : grabbedKeys) {
+            item->location = position;
+            item->angle = angle;
+        }
+    }
+
     bool IsCollision(float x, float y) {
 
         if (x < -0.5 || y < -0.5) return false;
@@ -90,9 +105,11 @@ public:
         Element element = map.GetElement(iX, iY);
 
         switch (element.tag) {
+            case Tag::KEY:
+                HandleKey(iX, iY);
+                return false;
             case Tag::START:
             case Tag::FINISH:
-            case Tag::KEY:
             case Tag::EMPTY:
                 return false;
             case Tag::WALL:
@@ -129,16 +146,31 @@ public:
             }
         }
 
-        for(const auto& key: keys){
+        for (const auto &key: keys) {
             auto id = key.id;
-            Draw(key.location[0], key.location[1], key.location[2], textures.keyModel, (float) id / 10.0f, 0.0f, 0.0f, 0.5);
+            Draw(key.location[0], key.location[1], key.location[2], textures.keyModel, (float) id / 10.0f, 0.0f, 0.0f, 0.2, 0.0f);
         }
     }
 
 private:
 
-    void Draw(float x, float y, float z, const Model &model, float r, float g, float b, float scale = 1.0) {
+    void HandleKey(int iX, int iY) {
+
+        SceneKey *key = nullptr;
+        for (auto &item : keys) {
+            if (item.originX == iX && item.originY == iY) {
+                key = &item;
+            }
+        }
+        assert(key != nullptr);
+        grabbedKeys.insert(key);
+        std::cout << "handled key iX iY " << iX << ", " << iY << std::endl;
+        *map.GetElementRef(iX, iY) = Element::Empty();
+    }
+
+    void Draw(float x, float y, float z, const Model &model, float r, float g, float b, float scale = 1.0, float rotation = 0.0) {
         SetColor(r, g, b);
+        SetRotation(rotation);
         SetTranslation(x, y, z);
         SetScale(scale);
         SendTransformations();
@@ -146,8 +178,9 @@ private:
         ResetModel();
     }
 
-    void Draw(float x, float y, float z, const TexturedModel &texturedModel, float scale = 1.0) {
+    void Draw(float x, float y, float z, const TexturedModel &texturedModel, float scale = 1.0, float rotation =0.0) {
         SetTexture(texturedModel.textureId);
+        SetRotation(rotation);
         SetTranslation(x, y, z);
         SetScale(scale);
         SendTransformations();
@@ -165,6 +198,10 @@ private:
 
     void SetTranslation(float x, float y, float z = 0) {
         model = glm::translate(model, glm::vec3(x, y, z));
+    }
+
+    void SetRotation(float angle) {
+        model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
     }
 
     void SetTexture(int id) {

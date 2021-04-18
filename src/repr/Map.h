@@ -3,14 +3,15 @@
 #include <cstdlib>
 #include <vector>
 
-enum class Tag {
-    START,
+enum class Tag  {
+    START =0,
     FINISH,
     DOOR,
     KEY,
     WALL,
     EMPTY
 };
+
 
 struct Door {
     size_t id;
@@ -63,6 +64,12 @@ struct Map {
         assert(x < width);
         assert(y < height);
         return elements[y * width + x];
+    }
+
+    [[nodiscard]] Element* GetElementRef(size_t x, size_t y) {
+        assert(x < width);
+        assert(y < height);
+        return &elements[y*width + x];
     }
 };
 

@@ -33,6 +33,8 @@ const float LOOK_SPEED = 0.03;
 const float ZNEAR = 0.01;
 const float ZFAR = 10.0;
 const float EXTRA_FACTOR = 3.0f;
+const float KEY_DIST = 0.5f;
+const float KEY_HEIGHT = -0.1f;
 
 void handleKeyPress(State &state, int code) {
     switch (code) {
@@ -204,7 +206,8 @@ int main(int argc, char *argv[]) {
         }
 
         glm::vec3 dir(-STRAFE_SPEED * cos(state.angle), STRAFE_SPEED * sin(state.angle), 0.0f);
-        glm::vec3 dirExtra(-STRAFE_SPEED * EXTRA_FACTOR * cos(state.angle), STRAFE_SPEED * EXTRA_FACTOR * sin(state.angle), 0.0f);
+        glm::vec3 dKey(-KEY_DIST * cos(state.angle), KEY_DIST * sin(state.angle), KEY_HEIGHT);
+        glm::vec3 dirExtra(-STRAFE_SPEED * EXTRA_FACTOR * cos(state.angle), STRAFE_SPEED * EXTRA_FACTOR * sin(state.angle), 0);
 
         auto oldPosition = state.camPosition;
 
@@ -233,6 +236,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        auto keyPosition = state.camPosition + dKey;
+        scene.UpdateGrabbedKeys(keyPosition, state.angle);
 
         // Clear the screen to default color
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
