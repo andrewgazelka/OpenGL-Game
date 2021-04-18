@@ -16,8 +16,8 @@ enum class Strafe {
 
 
 struct Movement {
-    Look look = Look::NONE;
-    Strafe strafe = Strafe::NONE;
+    float sideStrafe = 0.0;
+    float forwardStrafe =0.0;
     float velocityY = 0.0;
     static Movement Default(){
         Movement movement;
@@ -32,6 +32,7 @@ struct State {
     bool fullscreen = false;
     glm::vec3 camPosition;
     float angle;
+    float angle2;
     Movement movement;
 
 

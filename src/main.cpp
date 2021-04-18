@@ -38,6 +38,21 @@ const float KEY_HEIGHT = -0.1f;
 const float JUMP_VEL = 0.07;
 const float ACC_G = 0.2f;
 
+const float MOUSE_SENSITIVITY = 0.001;
+
+void handleMouseMove(State &state, const SDL_MouseMotionEvent &event, SDL_Window *window) {
+    state.angle += MOUSE_SENSITIVITY * (float) event.xrel;
+    state.angle2 += MOUSE_SENSITIVITY * (float) event.yrel;
+    int width, height;
+    SDL_GetWindowSize(window, &width, &height);
+
+    SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
+    // center mouse
+    SDL_WarpMouseInWindow(window, width / 2, height / 2);
+    SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
+
+}
+
 void handleKeyPress(State &state, int code) {
     switch (code) {
         case SDLK_q:
@@ -55,16 +70,16 @@ void handleKeyHold(State &state, int code) {
     auto &movement = state.movement;
     switch (code) {
         case SDLK_a:
-            movement.look = Look::LEFT;
+            movement.sideStrafe -= 1;
             break;
         case SDLK_d:
-            movement.look = Look::RIGHT;
+            movement.sideStrafe += 1;
             break;
         case SDLK_w:
-            movement.strafe = Strafe::FORWARD;
+            movement.forwardStrafe += 1;
             break;
         case SDLK_s:
-            movement.strafe = Strafe::BACKWARD;
+            movement.forwardStrafe -= 1;
             break;
         case SDLK_SPACE:
             // if on ground
@@ -89,11 +104,15 @@ int main(int argc, char *argv[]) {
 
     Map map = MapParser::parseMap("maps/test.txt");
 
-
     Utils::SDLInit();
+
+    SDL_ShowCursor(SDL_DISABLE);
 
     //Create brickCube window (offsetx, offsety, width, height, flags)
     SDL_Window *window = SDL_CreateWindow(window_title, 100, 100, screen_width, screen_height, SDL_WINDOW_OPENGL);
+
+    SDL_SetWindowGrab(window, SDL_TRUE);
+
     float aspect = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 
     //Create brickCube context to draw in
@@ -193,7 +212,7 @@ int main(int argc, char *argv[]) {
 
         if (!state.onGround() || state.movement.velocityY != 0.0f) {
             state.camPosition[2] += state.movement.velocityY;
-            if(state.camPosition[2] < 0.0f){ // so we always hit ground
+            if (state.camPosition[2] < 0.0f) { // so we always hit ground
                 state.camPosition[2] = 0.0f;
             }
 
@@ -201,11 +220,14 @@ int main(int argc, char *argv[]) {
         }
 
         // reset movement
-        state.movement.strafe = Strafe::NONE;
-        state.movement.look = Look::NONE;
+        state.movement.sideStrafe = 0.0;
+        state.movement.forwardStrafe = 0.0;
 
         while (SDL_PollEvent(&windowEvent)) {
             switch (windowEvent.type) {
+                case SDL_MOUSEMOTION:
+                    handleMouseMove(state, windowEvent.motion, window);
+                    break;
                 case SDL_QUIT:
                     state.quit = true;
                     break;
@@ -220,39 +242,21 @@ int main(int argc, char *argv[]) {
         }
 
 
-        switch (state.movement.look) {
-            case Look::NONE:
-                break;
-            case Look::LEFT:
-                state.angle -= LOOK_SPEED;
-                break;
-            case Look::RIGHT:
-                state.angle += LOOK_SPEED;
-                break;
-        }
+        auto& movement = state.movement;
+        float dX = -STRAFE_SPEED * cos(state.angle) * movement.forwardStrafe + STRAFE_SPEED * sin(state.angle) * movement.sideStrafe;
+        float dY = STRAFE_SPEED * sin(state.angle) * movement.forwardStrafe + STRAFE_SPEED * cos(state.angle) * movement.sideStrafe;
+        glm::vec3 moveDir(dX, dY, 0.0f);
+        glm::vec3 dirExtra(dX * EXTRA_FACTOR, dY * EXTRA_FACTOR, 0.0f);
 
-        glm::vec3 dir(-STRAFE_SPEED * cos(state.angle), STRAFE_SPEED * sin(state.angle), 0.0f);
+        glm::vec3 lookDir(-cos(state.angle), sin(state.angle), -sin(state.angle2));
         glm::vec3 dKey(-KEY_DIST * cos(state.angle), KEY_DIST * sin(state.angle), KEY_HEIGHT);
-        glm::vec3 dirExtra(-STRAFE_SPEED * EXTRA_FACTOR * cos(state.angle), STRAFE_SPEED * EXTRA_FACTOR * sin(state.angle), 0);
 
         auto oldPosition = state.camPosition;
 
-        glm::vec3 extraPosition = state.camPosition;
+        glm::vec3 extraPosition = state.camPosition + dirExtra;
+        state.camPosition += moveDir;
 
-        switch (state.movement.strafe) {
-            case Strafe::NONE:
-                break;
-            case Strafe::FORWARD:
-                state.camPosition += dir;
-                extraPosition += dirExtra;
-                break;
-            case Strafe::BACKWARD:
-                state.camPosition -= dir;
-                extraPosition -= dirExtra;
-                break;
-        }
-
-        if (state.movement.strafe != Strafe::NONE) {
+        if (dX != 0.0 || dY != 0.0) {
 
             float x = extraPosition[0];
             float y = extraPosition[1];
@@ -285,7 +289,7 @@ int main(int argc, char *argv[]) {
         GLint modelLoc = glGetUniformLocation(texturedShader, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        glm::vec3 center = state.camPosition + dir;
+        glm::vec3 center = state.camPosition + lookDir;
         glm::vec3 up(0.0f, 0.0f, 1.0f);
 
         // set view matrix
