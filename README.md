@@ -24,8 +24,14 @@ WS000aW
 WWWWWWW
 ```
 
+
+
+
+### Playthrough
 ![Example](.github/example.webp)
 
+### Collision
+![Example](.github/out.webp)
 
 ## Checklist
 
