@@ -18,22 +18,43 @@ struct TextureData {
     Model &doorModel;
 };
 
+
+struct SceneKey {
+    size_t id;
+    glm::vec3 location;
+};
+
 class Scene {
 private:
     TextureData textures;
-    Map map;
+    const Map& map;
     unsigned int shaderProgram;
     GLint modelParam;
     GLint textureIdParam;
     GLint colorParam;
     glm::mat4 model;
+    std::vector<SceneKey> keys;
 
 public:
-    Scene(const TextureData &data, Map map, unsigned int shaderProgram) : textures(data), map(std::move(map)), shaderProgram(shaderProgram) {
+    Scene(const TextureData &data, const Map &map, unsigned int shaderProgram) : textures(data), map(map), shaderProgram(shaderProgram) {
         modelParam = glGetUniformLocation(shaderProgram, "model");
         textureIdParam = glGetUniformLocation(shaderProgram, "texID");
         colorParam = glGetUniformLocation(shaderProgram, "inColor");
         model = glm::mat4(1);
+
+        for (int x = 0; x < map.width; ++x) {
+            for (int y = 0; y < map.height; ++y) {
+                auto element = map.GetElement(x, y);
+                if (element.tag == Tag::KEY) {
+                    glm::vec3 location(x, y, -.25);
+                    SceneKey key = {
+                            .id = element.value.key.id,
+                            .location = location
+                    };
+                    keys.push_back(key);
+                }
+            }
+        }
     }
 
     void ResetModel() {
@@ -94,13 +115,11 @@ public:
                     case Tag::FINISH:
                     case Tag::START:
                     case Tag::EMPTY:
+                    case Tag::KEY: // keys are dynamic—we draw them elsewhere
                         // no special drawing
                         break;
                     case Tag::DOOR:
                         Draw(fx, fy, 0.0f, textures.doorModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
-                        break;
-                    case Tag::KEY:
-                        Draw(fx, fy, -.25f, textures.keyModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f, 0.5);
                         break;
                     case Tag::WALL:
                         Draw(fx, fy, 0.0f, textures.wallModel);
@@ -108,6 +127,11 @@ public:
                 }
                 Draw(fx, fy, -1.0f, textures.floorModel);
             }
+        }
+
+        for(const auto& key: keys){
+            auto id = key.id;
+            Draw(key.location[0], key.location[1], key.location[2], textures.keyModel, (float) id / 10.0f, 0.0f, 0.0f, 0.5);
         }
     }
 
