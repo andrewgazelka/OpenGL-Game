@@ -79,9 +79,6 @@ int main(int argc, char *argv[]) {
 
     Map map = MapParser::parseMap("maps/test.txt");
 
-    State state{
-            .camPosition = glm::vec3(3.f, 0.f, 0.f)
-    };
 
     Utils::SDLInit();
 
@@ -98,14 +95,14 @@ int main(int argc, char *argv[]) {
     auto brickTexture = Utils::loadBMP("textures/brick.bmp");
 
     Model cubeModel = Utils::loadModel("models/cube.txt");
-    Model model2 = Utils::loadModel("models/knot.txt");
+    Model knotModel = Utils::loadModel("models/knot.txt");
 
 
     // combine into one array and change pointers of other models
-    Model combined = Model::combine({&cubeModel, &model2});
+    Model combined = Model::combine({&cubeModel, &knotModel});
 
     std::cout << "cubeModel: " << cubeModel << std::endl;
-    std::cout << "model2: " << model2 << std::endl;
+    std::cout << "knotModel: " << knotModel << std::endl;
     std::cout << "combined: " << combined << std::endl;
 
     //Build cubeTexturedModel Vertex Array Object (VAO) to store mapping of shader attributse to VBO
@@ -151,10 +148,16 @@ int main(int argc, char *argv[]) {
 
     TextureData texturedData = {
             .wallModel = cubeTexturedModel,
-            .doorModel = cubeModel
+            .keyModel = knotModel,
+            .doorModel = cubeModel,
     };
 
     Scene scene(texturedData, map, texturedShader);
+
+
+    State state{
+            .camPosition = scene.GetStartPosition()
+    };
 
     //Event Loop (Loop forever processing each event as fast as possible)
     SDL_Event windowEvent;

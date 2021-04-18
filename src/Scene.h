@@ -12,6 +12,7 @@ struct TexturedModel {
 
 struct TextureData {
     TexturedModel &wallModel;
+    Model &keyModel;
 //    TexturedModel &floorModel;
 //    Model &keyModel;
     Model &doorModel;
@@ -31,6 +32,20 @@ public:
         modelParam = glGetUniformLocation(shaderProgram, "model");
         textureIdParam = glGetUniformLocation(shaderProgram, "texID");
         colorParam = glGetUniformLocation(shaderProgram, "inColor");
+    }
+
+    glm::vec3 GetStartPosition() {
+
+        for (int x = 0; x < map.width; ++x) {
+            for (int y = 0; y < map.height; ++y) {
+                auto element = map.GetElement(x, y);
+                if (element.tag == Tag::START) {
+                    glm::vec3 res(x, y, 0.0);
+                    return res;
+                }
+            }
+        }
+        throw std::logic_error("no start position");
     }
 
     bool IsCollision(float x, float y) {
@@ -72,9 +87,10 @@ public:
                         // no special drawing
                         break;
                     case Tag::DOOR:
-                        Draw(x,y, textures.doorModel, (float) element.value.door.id / 10.0f , 0.0f, 0.0f);
+                        Draw(x, y, textures.doorModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
                         break;
                     case Tag::KEY:
+                        Draw(x, y, textures.keyModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
                         break;
                     case Tag::WALL:
                         Draw(x, y, textures.wallModel);
