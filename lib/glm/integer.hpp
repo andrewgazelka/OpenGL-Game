@@ -85,8 +85,8 @@ namespace glm
 
 	/// Extracts bits [offset, offset + bits - 1] from value,
 	/// returning them in the least significant bits of the result.
-	/// For unsigned data types, the most significant bits of the
-	/// result will be set to zero. For signed data types, the
+	/// For unsigned textures types, the most significant bits of the
+	/// result will be set to zero. For signed textures types, the
 	/// most significant bits will be set to the value of bit offset + base - 1.
 	///
 	/// If bits is zero, the result will be zero. The result will be

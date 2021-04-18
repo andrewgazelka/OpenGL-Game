@@ -147,7 +147,6 @@ namespace Utils {
     }
 
     void drawGeometry(unsigned int shaderProgram, const Model& model1, const Model& model2, float colR, float colG, float colB) {
-
         GLint uniColor = glGetUniformLocation(shaderProgram, "inColor");
         glm::vec3 colVec(colR, colG, colB);
         glUniform3fv(uniColor, 1, glm::value_ptr(colVec));
@@ -161,11 +160,11 @@ namespace Utils {
 
         //Rotate model (matrix) based on how much time has past
         glm::mat4 model = glm::mat4(1);
-        GLint uniModel = glGetUniformLocation(shaderProgram, "model");
-//        glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model)); //pass model matrix to shader
+        GLint modelParam = glGetUniformLocation(shaderProgram, "model");
+//        glUniformMatrix4fv(modelParam, 1, GL_FALSE, glm::value_ptr(model)); //pass model matrix to shader
 //
 //        // draw model 2 without texture
-//        glUniform1i(uniTexID, -1);
+//        glUniform1i(textureIdParam, -1);
 //        model2.draw();
 
 
@@ -177,9 +176,7 @@ namespace Utils {
         //Translate the model (matrix) left and back
         model = glm::mat4(1); //Load intentity
         model = glm::translate(model, glm::vec3(-2, -1, -.4));
-        glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
-
-        //Set which texture to use (0 = wood texture ... bound to GL_TEXTURE0)
+        glUniformMatrix4fv(modelParam, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(uniTexID, 0);
 
         //Draw an instance of the model (at the position & orientation specified by the model matrix above)
@@ -198,7 +195,7 @@ namespace Utils {
 
         //Set which texture to use (1 = brick texture ... bound to GL_TEXTURE1)
         glUniform1i(uniTexID, 1);
-        glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(modelParam, 1, GL_FALSE, glm::value_ptr(model));
 
         //Draw an instance of the model (at the position & orientation specified by the model matrix above)
         model2.draw();
@@ -235,7 +232,7 @@ Model Model::combine(std::initializer_list<Model *> models) {
 
     std::vector<float> data;
 
-    // second pass create data array
+    // second pass create textures array
     int i = 0;
     int iStart = 0;
     for (auto &model: models) {

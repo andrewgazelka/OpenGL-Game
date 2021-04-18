@@ -20,6 +20,8 @@
 
 #include "utils.h"
 #include "State.h"
+#include "Scene.h"
+#include "parse/MapParser.h"
 
 using namespace std;
 
@@ -73,17 +75,19 @@ float avg_render_time = 0;
 
 int main(int argc, char *argv[]) {
 
+    Map map = MapParser::parseMap("maps/test.txt");
+
     State state{
             .camPosition = glm::vec3(3.f, 0.f, 0.f)
     };
 
     Utils::SDLInit();
 
-    //Create a window (offsetx, offsety, width, height, flags)
+    //Create cubeTexturedModel window (offsetx, offsety, width, height, flags)
     SDL_Window *window = SDL_CreateWindow(window_title, 100, 100, screen_width, screen_height, SDL_WINDOW_OPENGL);
     float aspect = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 
-    //Create a context to draw in
+    //Create cubeTexturedModel context to draw in
     SDL_GLContext context = SDL_GL_CreateContext(window);
 
     Utils::loadGlad();
@@ -91,26 +95,26 @@ int main(int argc, char *argv[]) {
     auto woodTexture = Utils::loadBMP("textures/wood.bmp");
     auto brickTexture = Utils::loadBMP("textures/brick.bmp");
 
-    Model model1 = Utils::loadModel("models/teapot.txt");
+    Model cubeModel = Utils::loadModel("models/cube.txt");
     Model model2 = Utils::loadModel("models/knot.txt");
 
 
     // combine into one array and change pointers of other models
-    Model combined = Model::combine({&model1, &model2});
+    Model combined = Model::combine({&cubeModel, &model2});
 
-    std::cout << "model1: "<< model1 << std::endl;
+    std::cout << "cubeModel: " << cubeModel << std::endl;
     std::cout << "model2: "<< model2 << std::endl;
     std::cout << "combined: "<< combined << std::endl;
 
-    //Build a Vertex Array Object (VAO) to store mapping of shader attributse to VBO
+    //Build cubeTexturedModel Vertex Array Object (VAO) to store mapping of shader attributse to VBO
     GLuint vao;
-    glGenVertexArrays(1, &vao); //Create a VAO
+    glGenVertexArrays(1, &vao); //Create cubeTexturedModel VAO
     glBindVertexArray(vao); //Bind the above created VAO to the current context
 
     //Allocate memory on the graphics card to store geometry (vertex buffer object)
     GLuint vbo[1];
     glGenBuffers(1, vbo);  //Create 1 buffer called vbo
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at a time)
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at cubeTexturedModel time)
     glBufferData(GL_ARRAY_BUFFER, combined.GetNumberLines() * sizeof(float), combined.data.data(), GL_STATIC_DRAW); //upload vertices to vbo
 
     auto texturedShader = Utils::InitShader("shaders/textured-Vertex.glsl", "shaders/textured-Fragment.glsl");
@@ -134,9 +138,20 @@ int main(int argc, char *argv[]) {
     GLint uniView = glGetUniformLocation(texturedShader, "view");
     GLint uniProj = glGetUniformLocation(texturedShader, "proj");
 
-    glBindVertexArray(0); //Unbind the VAO in case we want to create a new one
+    glBindVertexArray(0); //Unbind the VAO in case we want to create cubeTexturedModel new one
 
     glEnable(GL_DEPTH_TEST);
+
+    TexturedModel cubeTexturedModel = {
+            .model = cubeModel,
+            .textureId = 2,
+    };
+
+    TextureData texturedData = {
+            .wallModel = cubeTexturedModel
+    };
+
+    Scene scene(texturedData, map, texturedShader);
 
     //Event Loop (Loop forever processing each event as fast as possible)
     SDL_Event windowEvent;
@@ -190,7 +205,7 @@ int main(int argc, char *argv[]) {
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(texturedShader); //Set the active shader (only one can be used at a time)
+        glUseProgram(texturedShader); //Set the active shader (only one can be used at cubeTexturedModel time)
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
@@ -199,8 +214,6 @@ int main(int argc, char *argv[]) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, brickTexture);
         glUniform1i(glGetUniformLocation(texturedShader, "tex1"), 1);
-
-
 
         unsigned int t_now = SDL_GetTicks();
 
@@ -223,9 +236,10 @@ int main(int argc, char *argv[]) {
         GLint uniProj = glGetUniformLocation(texturedShader, "proj");
         glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
-        glBindVertexArray(vao); // TODO: huh
+        glBindVertexArray(vao);
 
-        Utils::drawGeometry(texturedShader, model1, model2, 1.0, 0.0, 0.0f);
+        scene.Draw();
+//        Utils::drawGeometry(texturedShader, cubeModel, model2, 1.0, 0.0, 0.0f);
 
         SDL_GL_SwapWindow(window); //Double buffering
 

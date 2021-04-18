@@ -15,7 +15,7 @@
 /// a pointer to the memory layout of the object. Matrix types store their values
 /// in column-major order.
 ///
-/// This is useful for uploading data to matrices or copying data to buffer objects.
+/// This is useful for uploading textures to matrices or copying textures to buffer objects.
 ///
 /// Example:
 /// @code
@@ -59,7 +59,7 @@ namespace glm
 	/// @addtogroup gtc_type_ptr
 	/// @{
 
-	/// Return the constant address to the data of the input parameter.
+	/// Return the constant address to the textures of the input parameter.
 	/// @see gtc_type_ptr
 	template<typename genType>
 	GLM_FUNC_DECL typename genType::value_type const * value_ptr(genType const& v);

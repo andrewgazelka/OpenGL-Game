@@ -28,7 +28,7 @@ add_subdirectory(test)
 
 set(SOURCES src/parse/MapParser.cpp src/parse/MapParser.h src/repr/Map.cpp src/repr/Map.h src/main.cpp)
 
-add_executable(proj4 ${SOURCES} src/utils.h src/utils.cpp src/State.cpp src/State.h)
+add_executable(proj4 ${SOURCES} src/utils.h src/utils.cpp src/State.cpp src/State.h src/Scene.cpp src/Scene.h)
 
 target_link_libraries(proj4 glm glad ${SDL2_LIBRARIES} Boost::boost)
 

@@ -7,14 +7,14 @@ namespace glm
 	/// Qualify GLM types in term of alignment (packed, aligned) and precision in term of ULPs (lowp, mediump, highp)
 	enum qualifier
 	{
-		packed_highp, ///< Typed data is tightly packed in memory and operations are executed with high precision in term of ULPs
-		packed_mediump, ///< Typed data is tightly packed in memory  and operations are executed with medium precision in term of ULPs for higher performance
-		packed_lowp, ///< Typed data is tightly packed in memory  and operations are executed with low precision in term of ULPs to maximize performance
+		packed_highp, ///< Typed textures is tightly packed in memory and operations are executed with high precision in term of ULPs
+		packed_mediump, ///< Typed textures is tightly packed in memory  and operations are executed with medium precision in term of ULPs for higher performance
+		packed_lowp, ///< Typed textures is tightly packed in memory  and operations are executed with low precision in term of ULPs to maximize performance
 
 #		if GLM_CONFIG_ALIGNED_GENTYPES == GLM_ENABLE
-			aligned_highp, ///< Typed data is aligned in memory allowing SIMD optimizations and operations are executed with high precision in term of ULPs
-			aligned_mediump, ///< Typed data is aligned in memory allowing SIMD optimizations and operations are executed with high precision in term of ULPs for higher performance
-			aligned_lowp, // ///< Typed data is aligned in memory allowing SIMD optimizations and operations are executed with high precision in term of ULPs to maximize performance
+			aligned_highp, ///< Typed textures is aligned in memory allowing SIMD optimizations and operations are executed with high precision in term of ULPs
+			aligned_mediump, ///< Typed textures is aligned in memory allowing SIMD optimizations and operations are executed with high precision in term of ULPs for higher performance
+			aligned_lowp, // ///< Typed textures is aligned in memory allowing SIMD optimizations and operations are executed with high precision in term of ULPs to maximize performance
 			aligned = aligned_highp, ///< By default aligned qualifier is also high precision
 #		endif
 
