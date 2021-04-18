@@ -14,7 +14,7 @@ struct TextureData {
     TexturedModel &wallModel;
 //    TexturedModel &floorModel;
 //    Model &keyModel;
-//    Model &doorModel;
+    Model &doorModel;
 };
 
 class Scene {
@@ -72,6 +72,7 @@ public:
                         // no special drawing
                         break;
                     case Tag::DOOR:
+                        Draw(x,y, textures.doorModel, (float) element.value.door.id / 10.0f , 0.0f, 0.0f);
                         break;
                     case Tag::KEY:
                         break;

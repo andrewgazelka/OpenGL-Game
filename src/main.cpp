@@ -150,7 +150,8 @@ int main(int argc, char *argv[]) {
     };
 
     TextureData texturedData = {
-            .wallModel = cubeTexturedModel
+            .wallModel = cubeTexturedModel,
+            .doorModel = cubeModel
     };
 
     Scene scene(texturedData, map, texturedShader);
