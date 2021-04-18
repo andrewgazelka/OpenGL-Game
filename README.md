@@ -24,5 +24,5 @@ WS000aW
 WWWWWWW
 ```
 
-![Example](.github/example.gif)
+https://youtu.be/E97exc_T-lE
 
