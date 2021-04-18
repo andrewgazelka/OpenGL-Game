@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
 
     TexturedModel cubeTexturedModel = {
             .model = cubeModel,
-            .textureId = 2,
+            .textureId = 1,
     };
 
     TextureData texturedData = {
