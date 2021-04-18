@@ -13,7 +13,7 @@ struct TexturedModel {
 struct TextureData {
     TexturedModel &wallModel;
     Model &keyModel;
-//    TexturedModel &floorModel;
+    TexturedModel &floorModel;
 //    Model &keyModel;
     Model &doorModel;
 };
@@ -86,6 +86,10 @@ public:
         for (int x = 0; x < map.width; ++x) {
             for (int y = 0; y < map.height; ++y) {
                 auto element = map.GetElement(x, y);
+
+                auto fx = (float) x;
+                auto fy = (float) y;
+
                 switch (element.tag) {
                     case Tag::FINISH:
                     case Tag::START:
@@ -93,22 +97,23 @@ public:
                         // no special drawing
                         break;
                     case Tag::DOOR:
-                        Draw(x, y, textures.doorModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
+                        Draw(fx, fy, 0.0f, textures.doorModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
                         break;
                     case Tag::KEY:
-                        Draw(x, y, textures.keyModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f, 0.5, -0.25);
+                        Draw(fx, fy, -.25f, textures.keyModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f, 0.5);
                         break;
                     case Tag::WALL:
-                        Draw(x, y, textures.wallModel);
+                        Draw(fx, fy, 0.0f, textures.wallModel);
                         break;
                 }
+                Draw(fx, fy, -1.0f, textures.floorModel);
             }
         }
     }
 
 private:
 
-    void Draw(int x, int y, const Model &model, float r, float g, float b, float scale = 1.0, float z=0.0) {
+    void Draw(float x, float y, float z, const Model &model, float r, float g, float b, float scale = 1.0) {
         SetColor(r, g, b);
         SetTranslation(x, y, z);
         SetScale(scale);
@@ -117,9 +122,9 @@ private:
         ResetModel();
     }
 
-    void Draw(int x, int y, const TexturedModel &texturedModel, float scale = 1.0) {
+    void Draw(float x, float y, float z, const TexturedModel &texturedModel, float scale = 1.0) {
         SetTexture(texturedModel.textureId);
-        SetTranslation(x, y);
+        SetTranslation(x, y, z);
         SetScale(scale);
         SendTransformations();
         texturedModel.model.draw();
@@ -134,7 +139,7 @@ private:
         model = glm::scale(model, glm::vec3(x, x, x));
     }
 
-    void SetTranslation(int x, int y, float z=0) {
+    void SetTranslation(float x, float y, float z = 0) {
         model = glm::translate(model, glm::vec3(x, y, z));
     }
 

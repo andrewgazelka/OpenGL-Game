@@ -82,17 +82,20 @@ int main(int argc, char *argv[]) {
 
     Utils::SDLInit();
 
-    //Create cubeTexturedModel window (offsetx, offsety, width, height, flags)
+    //Create brickCube window (offsetx, offsety, width, height, flags)
     SDL_Window *window = SDL_CreateWindow(window_title, 100, 100, screen_width, screen_height, SDL_WINDOW_OPENGL);
     float aspect = static_cast<float>(screen_width) / static_cast<float>(screen_height);
 
-    //Create cubeTexturedModel context to draw in
+    //Create brickCube context to draw in
     SDL_GLContext context = SDL_GL_CreateContext(window);
 
     Utils::loadGlad();
 
     auto woodTexture = Utils::loadBMP("textures/wood.bmp");
+    const auto WOOD_TEXTURE_ID = 0;
+
     auto brickTexture = Utils::loadBMP("textures/brick.bmp");
+    const auto BRICK_TEXTURE_ID = 1;
 
     Model cubeModel = Utils::loadModel("models/cube.txt");
     Model knotModel = Utils::loadModel("models/knot.txt");
@@ -105,15 +108,15 @@ int main(int argc, char *argv[]) {
     std::cout << "knotModel: " << knotModel << std::endl;
     std::cout << "combined: " << combined << std::endl;
 
-    //Build cubeTexturedModel Vertex Array Object (VAO) to store mapping of shader attributse to VBO
+    //Build brickCube Vertex Array Object (VAO) to store mapping of shader attributse to VBO
     GLuint vao;
-    glGenVertexArrays(1, &vao); //Create cubeTexturedModel VAO
+    glGenVertexArrays(1, &vao); //Create brickCube VAO
     glBindVertexArray(vao); //Bind the above created VAO to the current context
 
     //Allocate memory on the graphics card to store geometry (vertex buffer object)
     GLuint vbo[1];
     glGenBuffers(1, vbo);  //Create 1 buffer called vbo
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at cubeTexturedModel time)
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at brickCube time)
     glBufferData(GL_ARRAY_BUFFER, combined.GetNumberLines() * sizeof(float), combined.data.data(), GL_STATIC_DRAW); //upload vertices to vbo
 
     auto texturedShader = Utils::InitShader("shaders/textured-Vertex.glsl", "shaders/textured-Fragment.glsl");
@@ -137,18 +140,24 @@ int main(int argc, char *argv[]) {
 //    GLint uniView = glGetUniformLocation(texturedShader, "view");
 //    GLint uniProj = glGetUniformLocation(texturedShader, "proj");
 
-    glBindVertexArray(0); //Unbind the VAO in case we want to create cubeTexturedModel new one
+    glBindVertexArray(0); //Unbind the VAO in case we want to create brickCube new one
 
     glEnable(GL_DEPTH_TEST);
 
-    TexturedModel cubeTexturedModel = {
+    TexturedModel brickCube = {
             .model = cubeModel,
-            .textureId = 1,
+            .textureId = BRICK_TEXTURE_ID,
+    };
+
+    TexturedModel woodCube = {
+            .model = cubeModel,
+            .textureId = WOOD_TEXTURE_ID,
     };
 
     TextureData texturedData = {
-            .wallModel = cubeTexturedModel,
+            .wallModel = brickCube,
             .keyModel = knotModel,
+            .floorModel = woodCube,
             .doorModel = cubeModel,
     };
 
@@ -229,15 +238,15 @@ int main(int argc, char *argv[]) {
         glClearColor(.2f, 0.4f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(texturedShader); //Set the active shader (only one can be used at cubeTexturedModel time)
+        glUseProgram(texturedShader); //Set the active shader (only one can be used at brickCube time)
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
-        glUniform1i(glGetUniformLocation(texturedShader, "tex0"), 0);
+        glUniform1i(glGetUniformLocation(texturedShader, "tex0"), WOOD_TEXTURE_ID);
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, brickTexture);
-        glUniform1i(glGetUniformLocation(texturedShader, "tex1"), 1);
+        glUniform1i(glGetUniformLocation(texturedShader, "tex1"), BRICK_TEXTURE_ID);
 
         unsigned int t_now = SDL_GetTicks();
 
