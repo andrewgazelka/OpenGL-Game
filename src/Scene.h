@@ -26,12 +26,18 @@ private:
     GLint modelParam;
     GLint textureIdParam;
     GLint colorParam;
+    glm::mat4 model;
 
 public:
     Scene(const TextureData &data, Map map, unsigned int shaderProgram) : textures(data), map(std::move(map)), shaderProgram(shaderProgram) {
         modelParam = glGetUniformLocation(shaderProgram, "model");
         textureIdParam = glGetUniformLocation(shaderProgram, "texID");
         colorParam = glGetUniformLocation(shaderProgram, "inColor");
+        model = glm::mat4(1);
+    }
+
+    void ResetModel() {
+        model = glm::mat4(1);
     }
 
     glm::vec3 GetStartPosition() {
@@ -76,7 +82,7 @@ public:
     }
 
 
-    void Draw() const {
+    void Draw() {
         for (int x = 0; x < map.width; ++x) {
             for (int y = 0; y < map.height; ++y) {
                 auto element = map.GetElement(x, y);
@@ -90,7 +96,7 @@ public:
                         Draw(x, y, textures.doorModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
                         break;
                     case Tag::KEY:
-                        Draw(x, y, textures.keyModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f);
+                        Draw(x, y, textures.keyModel, (float) element.value.door.id / 10.0f, 0.0f, 0.0f, 0.5);
                         break;
                     case Tag::WALL:
                         Draw(x, y, textures.wallModel);
@@ -102,29 +108,41 @@ public:
 
 private:
 
-    void Draw(int x, int y, const Model &model, float r, float g, float b) const {
+    void Draw(int x, int y, const Model &model, float r, float g, float b, float scale = 1.0) {
         SetColor(r, g, b);
         SetTranslation(x, y);
+        SetScale(scale);
+        SendTransformations();
         model.draw();
+        ResetModel();
     }
 
-    void Draw(int x, int y, const TexturedModel &texturedModel) const {
+    void Draw(int x, int y, const TexturedModel &texturedModel, float scale = 1.0) {
         SetTexture(texturedModel.textureId);
         SetTranslation(x, y);
+        SetScale(scale);
+        SendTransformations();
         texturedModel.model.draw();
+        ResetModel();
     }
 
-    void SetTranslation(int x, int y) const {
-        glm::mat4 model(1);
-        model = glm::translate(model, glm::vec3(x, y, 0));
+    void SendTransformations() {
         glUniformMatrix4fv(modelParam, 1, GL_FALSE, glm::value_ptr(model));
     }
 
-    void SetTexture(int id) const {
+    void SetScale(float x) {
+        model = glm::scale(model, glm::vec3(x, x, x));
+    }
+
+    void SetTranslation(int x, int y) {
+        model = glm::translate(model, glm::vec3(x, y, 0));
+    }
+
+    void SetTexture(int id) {
         glUniform1i(textureIdParam, id);
     }
 
-    void SetColor(float r, float g, float b) const {
+    void SetColor(float r, float g, float b) {
         glm::vec3 colVec(r, g, b);
         glUniform3fv(colorParam, 1, glm::value_ptr(colVec));
         SetTexture(-1);
