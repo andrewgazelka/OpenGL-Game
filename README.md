@@ -54,3 +54,26 @@ WWWWWWW
 - [x] Video (webp video at start)
 
 ## New Maps
+
+### Impossible Map
+```text
+4 12
+WWWW
+WSAW
+W0BW
+W0CW
+W0DW
+W0EW
+W0aW
+W0bW
+W0cW
+W0dW
+W0eW
+WWWW
+```
+
+<p align="center">
+  <img width="460" src=".github/wall-keys.png">
+</p>
+
+There is no end to this map, but it shows off all the walls and keys!

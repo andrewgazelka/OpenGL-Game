@@ -102,7 +102,7 @@ float avg_render_time = 0;
 
 int main(int argc, char *argv[]) {
 
-    Map map = MapParser::parseMap("maps/test.txt");
+    Map map = MapParser::parseMap("maps/doors.txt");
 
     Utils::SDLInit();
 
