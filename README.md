@@ -1,5 +1,18 @@
 # Computer Graphics 5607 Project 4
 
+## Screenshots
+
+
+<p align="center">
+  <img width="800px" src=".github/wall-keys.png">
+  <img width="800px" src=".github/finish.png">
+  <img width="800px" src=".github/key.png">
+  <img width="800px" src=".github/all-keys.png">
+  <img width="800px" src=".github/all-walls.png">
+  <img width="800px" src=".github/jumping.png">
+</p>
+
+
 ## Example Level
 
 - This is the example level
@@ -56,6 +69,8 @@ WWWWWWW
 ## New Maps
 
 ### Impossible Map
+
+There is no end to this map, but it shows off all the walls and keys!
 ```text
 4 12
 WWWW
@@ -76,4 +91,3 @@ WWWW
   <img width="800px" src=".github/wall-keys.png">
 </p>
 
-There is no end to this map, but it shows off all the walls and keys!
