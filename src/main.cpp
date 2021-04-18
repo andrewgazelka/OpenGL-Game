@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <cstdio>
+#include <iostream>
 
 // Shader macro
 #define GLSL(src) "#version 150 core\n" #src
@@ -90,11 +91,16 @@ int main(int argc, char *argv[]) {
     auto woodTexture = Utils::loadBMP("textures/wood.bmp");
     auto brickTexture = Utils::loadBMP("textures/brick.bmp");
 
-    Model teapotModel = Utils::loadModel("models/teapot.txt");
-    Model cubeModel = Utils::loadModel("models/cube.txt");
+    Model model1 = Utils::loadModel("models/teapot.txt");
+    Model model2 = Utils::loadModel("models/knot.txt");
+
 
     // combine into one array and change pointers of other models
-    Model combined = Model::combine({&teapotModel, &cubeModel});
+    Model combined = Model::combine({&model1, &model2});
+
+    std::cout << "model1: "<< model1 << std::endl;
+    std::cout << "model2: "<< model2 << std::endl;
+    std::cout << "combined: "<< combined << std::endl;
 
     //Build a Vertex Array Object (VAO) to store mapping of shader attributse to VBO
     GLuint vao;
@@ -105,7 +111,7 @@ int main(int argc, char *argv[]) {
     GLuint vbo[1];
     glGenBuffers(1, vbo);  //Create 1 buffer called vbo
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); //Set the vbo as the active array buffer (Only one buffer can be active at a time)
-    glBufferData(GL_ARRAY_BUFFER, combined.numLines * sizeof(float), combined.data.get(), GL_STATIC_DRAW); //upload vertices to vbo
+    glBufferData(GL_ARRAY_BUFFER, combined.GetNumberLines() * sizeof(float), combined.data.data(), GL_STATIC_DRAW); //upload vertices to vbo
 
     auto texturedShader = Utils::InitShader("shaders/textured-Vertex.glsl", "shaders/textured-Fragment.glsl");
 
@@ -219,7 +225,7 @@ int main(int argc, char *argv[]) {
 
         glBindVertexArray(vao); // TODO: huh
 
-        Utils::drawGeometry(texturedShader, teapotModel.start, teapotModel.numVertices, cubeModel.start, cubeModel.numVertices, 1.0, 1.0, 1.0);
+        Utils::drawGeometry(texturedShader, model1, model2, 1.0, 0.0, 0.0f);
 
         SDL_GL_SwapWindow(window); //Double buffering
 

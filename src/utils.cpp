@@ -15,19 +15,16 @@ namespace Utils {
 
         unsigned long numLines = 0;
         file >> numLines;
-        auto modelData = new float[numLines];
+        std::vector<float> modelData(numLines, 0);
+
         for (unsigned int i = 0; i < numLines; i++) {
             file >> modelData[i];
         }
 
         file.close();
 
-        auto numberVertices = static_cast<unsigned int>(numLines / 8);
-
         return {
-                .numLines = numLines,
-                .numVertices = numberVertices,
-                .data = std::unique_ptr<float[]>(modelData)
+                .data = modelData
         };
     }
 
@@ -136,7 +133,7 @@ namespace Utils {
         buffer = new char[length + 1];
 
         // read the appropriate number of bytes from the file
-        fseek(fp, 0, SEEK_SET);  // move position indicator to the start of the file
+        fseek(fp, 0, SEEK_SET);  // move position indicator to the startVertices of the file
         fread(buffer, 1, length, fp); // read all of the bytes
 
         // append a NULL character to indicate the end of the string
@@ -149,7 +146,7 @@ namespace Utils {
         return buffer;
     }
 
-    void drawGeometry(int shaderProgram, int model1_start, int model1_numVerts, int model2_start, int model2_numVerts, float colR, float colG, float colB) {
+    void drawGeometry(unsigned int shaderProgram, const Model& model1, const Model& model2, float colR, float colG, float colB) {
 
         GLint uniColor = glGetUniformLocation(shaderProgram, "inColor");
         glm::vec3 colVec(colR, colG, colB);
@@ -165,13 +162,11 @@ namespace Utils {
         //Rotate model (matrix) based on how much time has past
         glm::mat4 model = glm::mat4(1);
         GLint uniModel = glGetUniformLocation(shaderProgram, "model");
-        glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model)); //pass model matrix to shader
-
-        //Set which texture to use (-1 = no texture)
-        glUniform1i(uniTexID, -1);
-
-        //Draw an instance of the model (at the position & orientation specified by the model matrix above)
-        glDrawArrays(GL_TRIANGLES, model1_start, model1_numVerts); //(Primitive Type, Start Vertex, Num Verticies)
+//        glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model)); //pass model matrix to shader
+//
+//        // draw model 2 without texture
+//        glUniform1i(uniTexID, -1);
+//        model2.draw();
 
 
         //************
@@ -188,7 +183,7 @@ namespace Utils {
         glUniform1i(uniTexID, 0);
 
         //Draw an instance of the model (at the position & orientation specified by the model matrix above)
-        glDrawArrays(GL_TRIANGLES, model1_start, model1_numVerts); //(Primitive Type, Start Vertex, Num Verticies)
+        model1.draw();
 
         //************
         //Draw model #2 once
@@ -206,7 +201,7 @@ namespace Utils {
         glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
         //Draw an instance of the model (at the position & orientation specified by the model matrix above)
-        glDrawArrays(GL_TRIANGLES, model2_start, model2_numVerts); //(Primitive Type, Start Vertex, Num Verticies)
+        model2.draw();
     }
 
     unsigned int loadBMP(const std::string &filePath) {
@@ -234,4 +229,31 @@ namespace Utils {
         return tex;
     }
 
+}
+
+Model Model::combine(std::initializer_list<Model *> models) {
+
+    std::vector<float> data;
+
+    // second pass create data array
+    int i = 0;
+    int iStart = 0;
+    for (auto &model: models) {
+        for (int j = 0; j < model->GetNumberLines(); ++j) {
+            data.push_back(model->data[j]);
+            i++;
+        }
+        model->startVertices = iStart >> 3;
+        iStart = i;
+    }
+
+    return {
+            .data = data
+    };
+
+}
+
+std::ostream &operator<<(std::ostream &os, const Model &model) {
+    os << "numLines: " << model.GetNumberLines() << " numVertices: " << model.GetNumberVertices() << " startVertices: " << model.startVertices;
+    return os;
 }

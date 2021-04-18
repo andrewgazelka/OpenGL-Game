@@ -1,51 +1,35 @@
 #pragma once
 
+#include <vector>
 #include <string>
 #include "glad.h"  //Include order can matter here
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <vec3.hpp>
 #include <type_ptr.hpp>
+#include <ostream>
+#include <iostream>
 
 
 struct Model {
+    unsigned int startVertices = 0;
+    std::vector<float> data;
 
-    unsigned long numLines = 0;
-    unsigned int numVertices = 0;
-    unsigned int start = 0;
-    std::unique_ptr<float[]> data = nullptr;
-
-    static Model combine(std::initializer_list<Model*> models) {
-
-        // first pass... figure out the number of lines
-        unsigned long numLines = 0;
-        for (auto &model: models) {
-            numLines += model->numLines;
-        }
-
-        auto data = new float[numLines];
-
-        // second pass create data array
-        int i = 0;
-        int iStart = 0;
-        for (auto &model: models) {
-            for (int j = 0; j < model->numLines; ++j) {
-                data[i] = model->data[j];
-                i++;
-            }
-            model->data = std::unique_ptr<float[]>(&data[iStart]);
-            model->start = iStart;
-            iStart = i;
-        }
-
-
-        return {
-                .numLines = numLines,
-                .numVertices = static_cast<unsigned int>(numLines / 8),
-                .data = std::unique_ptr<float[]>(data)
-        };
-
+    [[nodiscard]] unsigned int GetNumberLines() const{
+        return data.size();
     }
+
+    [[nodiscard]] unsigned int GetNumberVertices() const{
+        return GetNumberLines() >> 3; // divide by 8
+    }
+
+    static Model combine(std::initializer_list<Model*> models);
+
+    void draw() const{
+        glDrawArrays(GL_TRIANGLES, startVertices, GetNumberVertices()); //(Primitive Type, Start Vertex, Num Verticies)
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Model &model);
 };
 
 namespace Utils {
@@ -60,7 +44,7 @@ namespace Utils {
 // Create a NULL-terminated string by reading the provided file
     char *readShaderSource(const char *shaderFile);
 
-    void drawGeometry(int shaderProgram, int model1_start, int model1_numVerts, int model2_start, int model2_numVerts, float colR, float colG, float colB);
+    void drawGeometry(unsigned int shaderProgram, const Model& model1, const Model& model2, float colR, float colG, float colB);
 
     unsigned int loadBMP(const std::string &filePath);
 
