@@ -91,3 +91,18 @@ WWWW
   <img width="800px" src=".github/wall-keys.png">
 </p>
 
+
+## Implementation
+
+I started off with the example `MultiObjectTextures` code 
+and started modifying it heavily. To help me understand the code, 
+I created a wrapper around many of the OpenGL functions. I then 
+composed the wrappers I created around primitives to create a game which
+looks and feels very nice compared to what my expectations 
+were.
+
+### Issues
+
+I don't believe I have any issues in the code now,
+but I experienced a lot of dumb mistakes. One such issue was
+I was doing matrix multiplication in the wrong order.
