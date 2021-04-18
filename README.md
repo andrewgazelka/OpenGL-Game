@@ -24,5 +24,5 @@ WS000aW
 WWWWWWW
 ```
 
-![Example](.github/example.gif)
+![Example](.github/example.webp)
 
