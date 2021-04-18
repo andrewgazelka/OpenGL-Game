@@ -31,6 +31,8 @@ float timePast = 0;
 const float FOV_Y = 3.14f / 4;
 const float STRAFE_SPEED = 0.07;
 const float LOOK_SPEED = 0.03;
+const float ZNEAR = 0.01;
+const float ZFAR = 10.0;
 
 void handleKeyPress(State &state, int code) {
     switch (code) {
@@ -135,8 +137,8 @@ int main(int argc, char *argv[]) {
     glEnableVertexAttribArray(texAttrib);
     glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
 
-    GLint uniView = glGetUniformLocation(texturedShader, "view");
-    GLint uniProj = glGetUniformLocation(texturedShader, "proj");
+//    GLint uniView = glGetUniformLocation(texturedShader, "view");
+//    GLint uniProj = glGetUniformLocation(texturedShader, "proj");
 
     glBindVertexArray(0); //Unbind the VAO in case we want to create cubeTexturedModel new one
 
@@ -232,7 +234,8 @@ int main(int argc, char *argv[]) {
         GLint uniView = glGetUniformLocation(texturedShader, "view");
         glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
-        glm::mat4 proj = glm::perspective(FOV_Y, aspect, 1.0f, 10.0f);
+        // Set Perspective ::: zNear zFar
+        glm::mat4 proj = glm::perspective(FOV_Y, aspect, ZNEAR, ZFAR);
         GLint uniProj = glGetUniformLocation(texturedShader, "proj");
         glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
